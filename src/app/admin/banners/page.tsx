@@ -1,0 +1,117 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
+import { useCatalog } from "@/context/CatalogContext";
+
+export default function AdminBannersPage() {
+  const { banner, updateBanner, ready } = useCatalog();
+  const [form, setForm] = useState(banner);
+
+  useEffect(() => {
+    setForm(banner);
+  }, [banner]);
+
+  if (!ready) {
+    return <div className="py-20 text-center text-neutral-400">Loading...</div>;
+  }
+
+  const save = () => updateBanner(form);
+
+  return (
+    <div>
+      <h1 className="mb-2 text-2xl font-bold tracking-tight md:text-3xl">
+        Banner Management
+      </h1>
+      <p className="mb-8 text-neutral-500">Control the homepage hero banner.</p>
+
+      <div className="grid gap-8 lg:grid-cols-2">
+        <div className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+          <Input
+            id="eyebrow"
+            label="Eyebrow"
+            value={form.eyebrow}
+            onChange={(e) => setForm({ ...form, eyebrow: e.target.value })}
+          />
+          <Input
+            id="title"
+            label="Title"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
+          <Input
+            id="subtitle"
+            label="Subtitle"
+            value={form.subtitle}
+            onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+          />
+          <Input
+            id="ctaLabel"
+            label="Button Label"
+            value={form.ctaLabel}
+            onChange={(e) => setForm({ ...form, ctaLabel: e.target.value })}
+          />
+          <Input
+            id="ctaHref"
+            label="Button Link"
+            value={form.ctaHref}
+            onChange={(e) => setForm({ ...form, ctaHref: e.target.value })}
+          />
+          <Input
+            id="videoUrl"
+            label="Video URL"
+            value={form.videoUrl}
+            onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+          />
+          <Input
+            id="posterUrl"
+            label="Poster Image URL"
+            value={form.posterUrl}
+            onChange={(e) => setForm({ ...form, posterUrl: e.target.value })}
+          />
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.active}
+              onChange={(e) => setForm({ ...form, active: e.target.checked })}
+              className="rounded text-primary"
+            />
+            Banner active
+          </label>
+          <Button onClick={save}>Save Banner</Button>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800">
+          <div className="relative aspect-[9/16] max-h-[520px] w-full bg-black md:aspect-video">
+            {form.posterUrl && (
+              <Image
+                src={form.posterUrl}
+                alt="Banner preview"
+                fill
+                className="object-cover opacity-60"
+                unoptimized={form.posterUrl.startsWith("data:")}
+              />
+            )}
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white">
+              <p className="text-[10px] uppercase tracking-[0.4em] text-white/80">
+                {form.eyebrow}
+              </p>
+              <h2 className="mt-3 font-display text-2xl font-bold md:text-4xl">
+                {form.title}
+              </h2>
+              <p className="mt-3 text-sm text-white/80">{form.subtitle}</p>
+              <span className="mt-6 rounded-full bg-white px-6 py-2 text-sm font-medium text-black">
+                {form.ctaLabel}
+              </span>
+            </div>
+          </div>
+          <p className="bg-neutral-50 px-4 py-2 text-xs text-neutral-500 dark:bg-neutral-900">
+            Live preview
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

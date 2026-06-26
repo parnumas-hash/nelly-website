@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" fill="none">
+  <rect width="800" height="1000" fill="#F5F5F5"/>
+  <rect x="280" y="380" width="240" height="180" rx="12" stroke="#D4D4D4" stroke-width="2" fill="#FAFAFA"/>
+  <circle cx="340" cy="440" r="24" stroke="#D4D4D4" stroke-width="2" fill="#FAFAFA"/>
+  <path d="M300 520 L380 460 L460 500 L540 420 L580 520 Z" stroke="#D4D4D4" stroke-width="2" fill="#EEEEEE"/>
+  <text x="400" y="620" text-anchor="middle" fill="#A3A3A3" font-family="system-ui, sans-serif" font-size="18" letter-spacing="0.2em">NELLY GROUP</text>
+</svg>
