@@ -5,12 +5,14 @@ import { Package, Tags, ImageIcon, Monitor, Plus } from "lucide-react";
 import StatCard from "@/components/admin/StatCard";
 import Button from "@/components/ui/Button";
 import { useCatalog } from "@/context/CatalogContext";
+import { useAdminSession } from "@/context/AdminSessionContext";
 import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 
 import { getProductTotalStock } from "@/lib/variants";
 
 export default function AdminDashboardPage() {
   const { adminProducts, brands, media, banner, ready } = useCatalog();
+  const { hasPermission } = useAdminSession();
 
   if (!ready) {
     return (
@@ -30,12 +32,26 @@ export default function AdminDashboardPage() {
     : "Browser localStorage";
 
   const quickLinks = [
-    { href: "/admin/products/new", label: "Add Product", icon: Plus },
-    { href: "/admin/products", label: "Products", icon: Package },
-    { href: "/admin/brands", label: "Brands", icon: Tags },
-    { href: "/admin/media", label: "Media", icon: ImageIcon },
-    { href: "/admin/banners", label: "Banners", icon: Monitor },
-  ];
+    hasPermission("products:write")
+      ? { href: "/admin/products/new", label: "Add Product", icon: Plus }
+      : null,
+    hasPermission("products:read")
+      ? { href: "/admin/products", label: "Products", icon: Package }
+      : null,
+    hasPermission("brands:read")
+      ? { href: "/admin/brands", label: "Brands", icon: Tags }
+      : null,
+    hasPermission("media:read")
+      ? { href: "/admin/media", label: "Media", icon: ImageIcon }
+      : null,
+    hasPermission("banners:read")
+      ? { href: "/admin/banners", label: "Banners", icon: Monitor }
+      : null,
+  ].filter(Boolean) as Array<{
+    href: string;
+    label: string;
+    icon: typeof Plus;
+  }>;
 
   return (
     <div>
@@ -48,12 +64,14 @@ export default function AdminDashboardPage() {
             Overview of your NELLY GROUP store
           </p>
         </div>
-        <Link href="/admin/products/new">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Product
-          </Button>
-        </Link>
+        {hasPermission("products:write") ? (
+          <Link href="/admin/products/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Product
+            </Button>
+          </Link>
+        ) : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

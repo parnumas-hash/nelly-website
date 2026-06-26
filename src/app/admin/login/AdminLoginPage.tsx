@@ -5,11 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Logo from "@/components/ui/Logo";
+import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/admin";
+  const cloudMode = isRemoteCatalogEnabled();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,15 +26,27 @@ export default function AdminLoginPage() {
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({
+          username: cloudMode ? username : username || undefined,
+          password,
+        }),
       });
 
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+        mustChangePassword?: boolean;
+      } | null;
+
       if (!response.ok) {
-        setError("รหัสผ่านไม่ถูกต้อง");
+        setError(data?.error ?? "เข้าสู่ระบบไม่สำเร็จ");
         return;
       }
 
-      router.replace(nextPath);
+      if (data?.mustChangePassword) {
+        router.replace("/admin/change-password");
+      } else {
+        router.replace(nextPath);
+      }
       router.refresh();
     } catch {
       setError("เข้าสู่ระบบไม่สำเร็จ ลองใหม่อีกครั้ง");
@@ -49,15 +64,28 @@ export default function AdminLoginPage() {
         </p>
         <h1 className="mt-2 font-display text-2xl font-bold">Admin Login</h1>
         <p className="mt-2 text-sm text-neutral-500">
-          ใส่รหัสผ่าน Admin เพื่อจัดการสินค้าและตั้งค่า
+          {cloudMode
+            ? "เข้าสู่ระบบด้วยบัญชีที่ Super Admin สร้างให้"
+            : "ใส่รหัสผ่าน Admin เพื่อจัดการสินค้าและตั้งค่า"}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {cloudMode ? (
+          <Input
+            id="admin-username"
+            label="Username"
+            autoComplete="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            required
+          />
+        ) : null}
         <Input
           id="admin-password"
-          label="Admin Password"
+          label={cloudMode ? "Password" : "Admin Password"}
           type="password"
+          autoComplete="current-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required

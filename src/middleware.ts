@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   ADMIN_COOKIE,
-  verifyAdminSessionTokenEdge,
+  parseAdminSessionEdge,
 } from "@/lib/admin/auth-edge";
+import {
+  getRequiredPermissionForPath,
+  hasPermission,
+} from "@/lib/admin/permissions";
 
 const ADMIN_LOGIN = "/admin/login";
+const ADMIN_CHANGE_PASSWORD = "/admin/change-password";
 
 function isProtectedAdminPath(pathname: string): boolean {
   if (!pathname.startsWith("/admin")) return false;
@@ -17,10 +22,16 @@ function isProtectedCatalogWrite(pathname: string, method: string): boolean {
   return false;
 }
 
+function isProtectedAdminApi(pathname: string): boolean {
+  return pathname.startsWith("/api/admin/users") ||
+    pathname === "/api/admin/change-password";
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const session = request.cookies.get(ADMIN_COOKIE)?.value;
-  const authenticated = await verifyAdminSessionTokenEdge(session);
+  const sessionToken = request.cookies.get(ADMIN_COOKIE)?.value;
+  const session = await parseAdminSessionEdge(sessionToken);
+  const authenticated = session !== null;
 
   if (isProtectedAdminPath(pathname) && !authenticated) {
     const loginUrl = new URL(ADMIN_LOGIN, request.url);
@@ -28,7 +39,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isProtectedCatalogWrite(pathname, request.method) && !authenticated) {
+  if (
+    authenticated &&
+    session?.mustChangePassword &&
+    pathname.startsWith("/admin") &&
+    pathname !== ADMIN_LOGIN &&
+    pathname !== ADMIN_CHANGE_PASSWORD
+  ) {
+    return NextResponse.redirect(new URL(ADMIN_CHANGE_PASSWORD, request.url));
+  }
+
+  if (authenticated && isProtectedAdminPath(pathname)) {
+    const required = getRequiredPermissionForPath(pathname);
+    if (
+      required &&
+      session &&
+      !hasPermission(session.permissions, required)
+    ) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+  }
+
+  if (
+    (isProtectedCatalogWrite(pathname, request.method) ||
+      isProtectedAdminApi(pathname)) &&
+    !authenticated
+  ) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -36,5 +72,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/catalog", "/api/catalog/restore"],
+  matcher: [
+    "/admin/:path*",
+    "/api/catalog",
+    "/api/catalog/restore",
+    "/api/admin/users/:path*",
+    "/api/admin/change-password",
+  ],
 };

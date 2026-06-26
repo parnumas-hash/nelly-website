@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/admin";
 import { enrichProductWithMedia } from "@/lib/media-library";
 import { getSeedImagesForProduct } from "@/lib/image-utils";
 import { sortBrandsAlphabetically } from "@/lib/brand-categories";
-import { isAdminAuthenticated } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
@@ -15,9 +15,8 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const session = await requirePermission("settings:write");
+  if (session instanceof NextResponse) return session;
 
   try {
     const raw = await request.text();

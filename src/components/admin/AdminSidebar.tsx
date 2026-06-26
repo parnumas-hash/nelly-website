@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  ExternalLink,
+  Menu,
+  X,
+  LogOut,
+  Users,
   LayoutDashboard,
   Package,
   Tags,
@@ -10,28 +15,30 @@ import {
   ImageIcon,
   Monitor,
   Settings,
-  ExternalLink,
-  Menu,
-  X,
-  LogOut,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/ui/Logo";
+import {
+  formatRoleLabels,
+  useAdminSession,
+} from "@/context/AdminSessionContext";
 
-const links = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/brands", label: "Brands", icon: Tags },
-  { href: "/admin/categories", label: "Categories", icon: FolderTree },
-  { href: "/admin/media", label: "Media", icon: ImageIcon },
-  { href: "/admin/banners", label: "Banners", icon: Monitor },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-];
+const ICONS = {
+  "/admin": LayoutDashboard,
+  "/admin/products": Package,
+  "/admin/brands": Tags,
+  "/admin/categories": FolderTree,
+  "/admin/media": ImageIcon,
+  "/admin/banners": Monitor,
+  "/admin/settings": Settings,
+  "/admin/users": Users,
+} as const;
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { user, loading, navItems } = useAdminSession();
 
   const Nav = () => (
     <>
@@ -42,7 +49,8 @@ export default function AdminSidebar() {
         </p>
       </div>
       <nav className="flex flex-1 flex-col gap-1">
-        {links.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, label }) => {
+          const Icon = ICONS[href as keyof typeof ICONS] ?? LayoutDashboard;
           const active =
             href === "/admin"
               ? pathname === "/admin"
@@ -65,6 +73,19 @@ export default function AdminSidebar() {
           );
         })}
       </nav>
+
+      {user ? (
+        <div className="mb-3 rounded-xl border border-neutral-200 px-3 py-3 text-xs dark:border-neutral-800">
+          <p className="font-medium text-neutral-900 dark:text-white">
+            {user.display_name}
+          </p>
+          <p className="mt-1 text-neutral-500">@{user.username}</p>
+          <p className="mt-1 text-neutral-400">{formatRoleLabels(user.roles)}</p>
+        </div>
+      ) : loading ? (
+        <p className="mb-3 px-2 text-xs text-neutral-400">Loading session...</p>
+      ) : null}
+
       <Link
         href="/"
         className="mt-auto flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-600 transition-colors hover:border-primary hover:text-primary dark:border-neutral-800"

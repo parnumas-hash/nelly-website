@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import {
-  ADMIN_COOKIE,
-  createAdminSessionToken,
-  verifyAdminPassword,
+  setAdminSessionCookie,
+  verifyAdminPasswordLegacy,
 } from "@/lib/admin/auth";
+import { getLegacySuperAdminSession } from "@/lib/admin/session-types";
+import {
+  authenticateAdminUser,
+  userRecordToSession,
+} from "@/lib/admin/users-store";
+import { isSupabaseConfigured } from "@/lib/supabase/admin";
 import {
   checkRateLimit,
   clearRateLimit,
@@ -13,7 +18,14 @@ import {
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
-    const rateLimit = checkRateLimit(`admin-login:${ip}`);
+    const body = (await request.json()) as {
+      username?: string;
+      password?: string;
+    };
+    const username = body.username?.trim() ?? "";
+    const password = body.password ?? "";
+    const rateKey = `admin-login:${ip}:${username || "legacy"}`;
+    const rateLimit = checkRateLimit(rateKey);
 
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -29,25 +41,35 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = (await request.json()) as { password?: string };
-    const password = body.password ?? "";
+    if (isSupabaseConfigured() && username) {
+      const user = await authenticateAdminUser(username, password);
+      if (!user) {
+        return NextResponse.json(
+          { error: "Invalid username or password." },
+          { status: 401 }
+        );
+      }
 
-    if (!verifyAdminPassword(password)) {
+      clearRateLimit(rateKey);
+      const response = NextResponse.json({
+        ok: true,
+        mustChangePassword: user.must_change_password,
+      });
+      setAdminSessionCookie(response, userRecordToSession(user));
+      return response;
+    }
+
+    if (!verifyAdminPasswordLegacy(password)) {
       return NextResponse.json({ error: "Invalid password." }, { status: 401 });
     }
 
-    clearRateLimit(`admin-login:${ip}`);
-
-    const response = NextResponse.json({ ok: true });
-    response.cookies.set(ADMIN_COOKIE, createAdminSessionToken(), {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    clearRateLimit(rateKey);
+    const response = NextResponse.json({ ok: true, mustChangePassword: false });
+    setAdminSessionCookie(response, getLegacySuperAdminSession());
     return response;
-  } catch {
-    return NextResponse.json({ error: "Login failed." }, { status: 400 });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Login failed.";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

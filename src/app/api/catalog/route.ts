@@ -45,7 +45,7 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const { isAdminAuthenticated } = await import("@/lib/admin/auth");
+  const { requirePermission } = await import("@/lib/admin/auth");
 
   if (!isSupabaseConfigured()) {
     return NextResponse.json(
@@ -54,9 +54,8 @@ export async function PUT(request: Request) {
     );
   }
 
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const session = await requirePermission("catalog:write");
+  if (session instanceof NextResponse) return session;
 
   try {
     const body = (await request.json()) as Partial<CatalogSnapshot>;
