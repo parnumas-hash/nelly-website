@@ -72,7 +72,9 @@ import {
   isRemoteCatalogEnabled,
   restoreRemoteCatalog,
   scheduleRemoteCatalogSync,
+  type CatalogSyncSnapshot,
 } from "@/lib/admin/catalog-sync";
+import { normalizeCatalogSnapshot } from "@/lib/admin/catalog-normalize";
 import { CATALOG_VERSION } from "@/lib/admin/storage";
 
 interface CatalogContextType {
@@ -215,14 +217,26 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, [banner]);
 
   const syncRemoteCatalog = useCallback(() => {
-    scheduleRemoteCatalogSync({
-      catalogVersion: CATALOG_VERSION,
-      products: adminProductsRef.current,
-      brands: brandsRef.current,
-      categories: categoriesRef.current,
-      media: mediaRef.current,
-      banner: bannerRef.current ?? loadBanner(),
-    });
+    scheduleRemoteCatalogSync(
+      normalizeCatalogSnapshot({
+        catalogVersion: CATALOG_VERSION,
+        products: adminProductsRef.current,
+        brands: brandsRef.current,
+        categories: categoriesRef.current,
+        media: mediaRef.current,
+        banner: bannerRef.current ?? loadBanner(),
+      })
+    );
+  }, []);
+
+  const applyCatalogSnapshot = useCallback((snapshot: CatalogSyncSnapshot) => {
+    const normalized = normalizeCatalogSnapshot(snapshot);
+    setAdminProducts(normalized.products);
+    setBrands(normalized.brands);
+    setCategories(normalized.categories);
+    setMedia(normalized.media);
+    mediaRef.current = normalized.media;
+    setBanner(normalized.banner);
   }, []);
 
   useEffect(() => {
@@ -233,12 +247,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         try {
           const remote = await fetchRemoteCatalog();
           if (!cancelled && remote) {
-            setAdminProducts(remote.products);
-            setBrands(remote.brands);
-            setCategories(remote.categories);
-            setMedia(remote.media);
-            mediaRef.current = remote.media;
-            setBanner(remote.banner);
+            applyCatalogSnapshot(remote);
             setReady(true);
             return;
           }
@@ -303,7 +312,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyCatalogSnapshot]);
 
   const getMediaUrl = useCallback(
     (id: string) => resolveMediaUrl(id, media) ?? PLACEHOLDER_IMAGE,
@@ -819,12 +828,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       try {
         if (isRemoteCatalogEnabled()) {
           const snapshot = await restoreRemoteCatalog(text);
-          setAdminProducts(snapshot.products);
-          setBrands(snapshot.brands);
-          setCategories(snapshot.categories);
-          setMedia(snapshot.media);
-          mediaRef.current = snapshot.media;
-          setBanner(snapshot.banner);
+          applyCatalogSnapshot(snapshot);
           setStorageError(null);
           return getCatalogBackupSummary(backup);
         }
@@ -850,7 +854,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         );
       }
     },
-    []
+    [applyCatalogSnapshot]
   );
 
   const updateBanner = useCallback((data: Partial<HeroBanner>) => {

@@ -5,10 +5,12 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCatalog } from "@/context/CatalogContext";
+import { loadBanner } from "@/lib/admin/storage";
 
 export default function HeroVideo() {
   const prefersReducedMotion = useReducedMotion();
-  const { banner, ready } = useCatalog();
+  const { banner: catalogBanner, ready } = useCatalog();
+  const banner = { ...loadBanner(), ...catalogBanner };
 
   const fade = (delay: number) =>
     prefersReducedMotion

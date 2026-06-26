@@ -10,6 +10,7 @@ import { enrichProductWithMedia } from "@/lib/media-library";
 import { getSeedImagesForProduct } from "@/lib/image-utils";
 import { sortBrandsAlphabetically } from "@/lib/brand-categories";
 import { CATALOG_VERSION } from "@/lib/admin/storage";
+import { normalizeCatalogSnapshot } from "@/lib/admin/catalog-normalize";
 
 export async function GET() {
   if (!isSupabaseConfigured()) {
@@ -18,25 +19,23 @@ export async function GET() {
 
   try {
     const snapshot = await loadCatalogFromDb();
-    if (!snapshot) {
-      return NextResponse.json({ empty: true, configured: true });
-    }
+    const normalized = normalizeCatalogSnapshot(snapshot);
 
-    const products = snapshot.products.map((product) =>
+    const products = normalized.products.map((product) =>
       enrichProductWithMedia(
         product,
-        snapshot.media,
+        normalized.media,
         getSeedImagesForProduct(product)
       )
     );
 
     return NextResponse.json({
-      catalogVersion: snapshot.catalogVersion,
+      catalogVersion: normalized.catalogVersion,
       products,
-      brands: sortBrandsAlphabetically(snapshot.brands),
-      categories: snapshot.categories,
-      media: snapshot.media,
-      banner: snapshot.banner,
+      brands: sortBrandsAlphabetically(normalized.brands),
+      categories: normalized.categories,
+      media: normalized.media,
+      banner: normalized.banner,
     });
   } catch (error) {
     const message =

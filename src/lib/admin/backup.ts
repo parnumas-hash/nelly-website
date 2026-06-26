@@ -91,7 +91,11 @@ export function downloadCatalogBackup(backup: CatalogBackup): void {
 
 function normalizeBackupBrand(brand: AdminBrand): AdminBrand {
   const hasCustom =
-    typeof brand.image === "string" && brand.image.startsWith("data:");
+    brand.hasCustomImage === true ||
+    (typeof brand.image === "string" &&
+      (brand.image.startsWith("data:") ||
+        brand.image.startsWith("http://") ||
+        brand.image.startsWith("https://")));
 
   return {
     ...brand,

@@ -203,21 +203,21 @@ export function shouldUnoptimize(src: string): boolean {
 export function hasBrandCustomImage(
   brand: Pick<{ image?: string; hasCustomImage?: boolean }, "image" | "hasCustomImage">
 ): boolean {
-  if (brand.hasCustomImage && typeof brand.image === "string" && brand.image.startsWith("data:")) {
-    return true;
-  }
-  return typeof brand.image === "string" && brand.image.startsWith("data:");
+  return getBrandDisplayImage(brand) !== null;
 }
 
 export function getBrandDisplayImage(
   brand: Pick<{ image?: string; hasCustomImage?: boolean }, "image" | "hasCustomImage">
 ): string | null {
-  if (hasBrandCustomImage(brand)) {
-    return brand.image!;
-  }
-  if (typeof brand.image === "string" && brand.image.startsWith("/")) {
-    return brand.image;
-  }
+  const image = brand.image;
+  if (typeof image !== "string" || !image.trim()) return null;
+
+  const isData = image.startsWith("data:");
+  const isLocal = image.startsWith("/");
+  const isRemote = isValidImageUrl(image) && !isData && !isLocal;
+
+  if (!isData && !isLocal && !isRemote) return null;
+  if (brand.hasCustomImage || isData || isLocal || isRemote) return image;
   return null;
 }
 

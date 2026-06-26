@@ -332,9 +332,17 @@ export function getDefaultBrands(): AdminBrand[] {
   }));
 }
 
+function brandHasStoredImage(brand: Pick<AdminBrand, "image" | "hasCustomImage">): boolean {
+  if (brand.hasCustomImage) return true;
+  const image = brand.image;
+  return (
+    typeof image === "string" &&
+    (image.startsWith("data:") || image.startsWith("http://") || image.startsWith("https://"))
+  );
+}
+
 function normalizeAdminBrand(stored: AdminBrand, seed: AdminBrand): AdminBrand {
-  const hasCustom =
-    typeof stored.image === "string" && stored.image.startsWith("data:");
+  const hasCustom = brandHasStoredImage(stored);
 
   return {
     ...seed,
@@ -394,8 +402,7 @@ export function loadBrands(): AdminBrand[] {
 }
 
 function normalizeCustomBrand(stored: AdminBrand): AdminBrand {
-  const hasCustom =
-    typeof stored.image === "string" && stored.image.startsWith("data:");
+  const hasCustom = brandHasStoredImage(stored);
 
   return {
     ...stored,

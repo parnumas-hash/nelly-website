@@ -76,7 +76,12 @@ export async function fetchRemoteCatalog(): Promise<CatalogSyncSnapshot | null> 
   const data = (await response.json()) as CatalogSyncSnapshot & {
     empty?: boolean;
   };
+
   if (data.empty) return null;
+  if (!Array.isArray(data.products) || !Array.isArray(data.brands)) {
+    throw new Error("Invalid catalog response from server.");
+  }
+
   return data;
 }
 

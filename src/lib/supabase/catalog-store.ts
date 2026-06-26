@@ -68,6 +68,8 @@ async function uploadBrandImages(brands: AdminBrand[]): Promise<AdminBrand[]> {
         `brands/${brand.id}.jpg`
       );
       next.push({ ...brand, image: url, hasCustomImage: true });
+    } else if (brand.hasCustomImage && brand.image) {
+      next.push(brand);
     } else {
       next.push(brand);
     }
