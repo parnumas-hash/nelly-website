@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCatalog } from "@/context/CatalogContext";
+import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 
 export default function AdminSettingsPage() {
   const {
@@ -105,10 +106,17 @@ export default function AdminSettingsPage() {
           Settings
         </h1>
         <p className="mt-2 text-neutral-500">
-          Export a backup before major changes. Restore replaces all admin data
-          in this browser.
+          Export a backup before major changes. When Supabase is connected,
+          restore uploads your catalog to the cloud for all visitors.
         </p>
       </div>
+
+      {isRemoteCatalogEnabled() && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300">
+          Cloud storage is active. Restore Backup will save products, prices,
+          and images to Supabase so the live site matches your backup.
+        </div>
+      )}
 
       {(restoreSuccess || restoreError) && (
         <div
@@ -182,8 +190,9 @@ export default function AdminSettingsPage() {
         </div>
 
         <p className="mt-4 text-xs text-neutral-500">
-          Tip: export regularly — data lives in this browser only until you move
-          to a server database.
+          {isRemoteCatalogEnabled()
+            ? "Restore on the live site (after setting Supabase env vars) to sync data for everyone."
+            : "Tip: export regularly — without Supabase, data lives in this browser only."}
         </p>
       </section>
 

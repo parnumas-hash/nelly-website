@@ -1,0 +1,56 @@
+import { NextResponse } from "next/server";
+import { parseCatalogBackup } from "@/lib/admin/backup";
+import { saveCatalogToDb } from "@/lib/supabase/catalog-store";
+import { isSupabaseConfigured } from "@/lib/supabase/admin";
+import { enrichProductWithMedia } from "@/lib/media-library";
+import { getSeedImagesForProduct } from "@/lib/image-utils";
+import { sortBrandsAlphabetically } from "@/lib/brand-categories";
+import { isAdminAuthenticated } from "@/lib/admin/auth";
+
+export async function POST(request: Request) {
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json(
+      { error: "Supabase is not configured." },
+      { status: 503 }
+    );
+  }
+
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  try {
+    const raw = await request.text();
+    const backup = parseCatalogBackup(raw);
+
+    const saved = await saveCatalogToDb({
+      catalogVersion: backup.catalogVersion,
+      products: backup.products,
+      brands: backup.brands,
+      categories: backup.categories,
+      media: backup.media,
+      banner: backup.banner,
+    });
+
+    const products = saved.products.map((product) =>
+      enrichProductWithMedia(
+        product,
+        saved.media,
+        getSeedImagesForProduct(product)
+      )
+    );
+
+    return NextResponse.json({
+      catalogVersion: saved.catalogVersion,
+      products,
+      brands: sortBrandsAlphabetically(saved.brands),
+      categories: saved.categories,
+      media: saved.media,
+      banner: saved.banner,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to restore backup.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}

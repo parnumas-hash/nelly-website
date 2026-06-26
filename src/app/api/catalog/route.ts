@@ -1,0 +1,98 @@
+import { NextResponse } from "next/server";
+import {
+  getDefaultCatalogSnapshot,
+  loadCatalogFromDb,
+  saveCatalogToDb,
+  type CatalogSnapshot,
+} from "@/lib/supabase/catalog-store";
+import { isSupabaseConfigured } from "@/lib/supabase/admin";
+import { enrichProductWithMedia } from "@/lib/media-library";
+import { getSeedImagesForProduct } from "@/lib/image-utils";
+import { sortBrandsAlphabetically } from "@/lib/brand-categories";
+import { CATALOG_VERSION } from "@/lib/admin/storage";
+
+export async function GET() {
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ empty: true, configured: false });
+  }
+
+  try {
+    const snapshot = await loadCatalogFromDb();
+    if (!snapshot) {
+      return NextResponse.json({ empty: true, configured: true });
+    }
+
+    const products = snapshot.products.map((product) =>
+      enrichProductWithMedia(
+        product,
+        snapshot.media,
+        getSeedImagesForProduct(product)
+      )
+    );
+
+    return NextResponse.json({
+      catalogVersion: snapshot.catalogVersion,
+      products,
+      brands: sortBrandsAlphabetically(snapshot.brands),
+      categories: snapshot.categories,
+      media: snapshot.media,
+      banner: snapshot.banner,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to load catalog.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  const { isAdminAuthenticated } = await import("@/lib/admin/auth");
+
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json(
+      { error: "Supabase is not configured." },
+      { status: 503 }
+    );
+  }
+
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  try {
+    const body = (await request.json()) as Partial<CatalogSnapshot>;
+    const defaults = getDefaultCatalogSnapshot();
+
+    const snapshot: CatalogSnapshot = {
+      catalogVersion: body.catalogVersion ?? CATALOG_VERSION,
+      products: body.products ?? defaults.products,
+      brands: body.brands ?? defaults.brands,
+      categories: body.categories ?? defaults.categories,
+      media: body.media ?? defaults.media,
+      banner: body.banner ?? defaults.banner,
+    };
+
+    const saved = await saveCatalogToDb(snapshot);
+
+    const products = saved.products.map((product) =>
+      enrichProductWithMedia(
+        product,
+        saved.media,
+        getSeedImagesForProduct(product)
+      )
+    );
+
+    return NextResponse.json({
+      catalogVersion: saved.catalogVersion,
+      products,
+      brands: sortBrandsAlphabetically(saved.brands),
+      categories: saved.categories,
+      media: saved.media,
+      banner: saved.banner,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to save catalog.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -71,6 +72,17 @@ export default function AdminSidebar() {
         <ExternalLink className="h-4 w-4" />
         View Store
       </Link>
+      <button
+        type="button"
+        onClick={async () => {
+          await fetch("/api/admin/logout", { method: "POST" });
+          window.location.href = "/admin/login";
+        }}
+        className="mt-2 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-neutral-500 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900"
+      >
+        <LogOut className="h-4 w-4" />
+        Sign Out
+      </button>
     </>
   );
 

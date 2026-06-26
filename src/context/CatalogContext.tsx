@@ -67,6 +67,13 @@ import {
   parseCatalogBackup,
   type CatalogBackupSummary,
 } from "@/lib/admin/backup";
+import {
+  fetchRemoteCatalog,
+  isRemoteCatalogEnabled,
+  restoreRemoteCatalog,
+  scheduleRemoteCatalogSync,
+} from "@/lib/admin/catalog-sync";
+import { CATALOG_VERSION } from "@/lib/admin/storage";
 
 interface CatalogContextType {
   ready: boolean;
@@ -184,6 +191,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const mediaRef = useRef<MediaItem[]>([]);
   const adminProductsRef = useRef<AdminProduct[]>([]);
   const categoriesRef = useRef<BrandCategory[]>([]);
+  const brandsRef = useRef<AdminBrand[]>([]);
+  const bannerRef = useRef<HeroBanner | null>(null);
 
   useEffect(() => {
     mediaRef.current = media;
@@ -198,47 +207,102 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, [categories]);
 
   useEffect(() => {
-    try {
-      const catalog = initializeCatalogFromStorage();
-      setAdminProducts(catalog.products);
-      setBrands(catalog.brands);
-      setCategories(catalog.categories);
-      const cleaned = removeUnusedMedia(
-        catalog.media,
-        catalog.products,
-        catalog.categories
-      );
-      if (cleaned.removedCount > 0) {
+    brandsRef.current = brands;
+  }, [brands]);
+
+  useEffect(() => {
+    bannerRef.current = banner;
+  }, [banner]);
+
+  const syncRemoteCatalog = useCallback(() => {
+    scheduleRemoteCatalogSync({
+      catalogVersion: CATALOG_VERSION,
+      products: adminProductsRef.current,
+      brands: brandsRef.current,
+      categories: categoriesRef.current,
+      media: mediaRef.current,
+      banner: bannerRef.current ?? loadBanner(),
+    });
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCatalog() {
+      if (isRemoteCatalogEnabled()) {
         try {
-          saveMedia(cleaned.media);
-          setMedia(cleaned.media);
-          mediaRef.current = cleaned.media;
-        } catch {
+          const remote = await fetchRemoteCatalog();
+          if (!cancelled && remote) {
+            setAdminProducts(remote.products);
+            setBrands(remote.brands);
+            setCategories(remote.categories);
+            setMedia(remote.media);
+            mediaRef.current = remote.media;
+            setBanner(remote.banner);
+            setReady(true);
+            return;
+          }
+        } catch (error) {
+          if (!cancelled) {
+            setStorageError(
+              error instanceof Error
+                ? error.message
+                : "Could not load catalog from cloud."
+            );
+          }
+        }
+      }
+
+      if (cancelled) return;
+
+      try {
+        const catalog = initializeCatalogFromStorage();
+        setAdminProducts(catalog.products);
+        setBrands(catalog.brands);
+        setCategories(catalog.categories);
+        const cleaned = removeUnusedMedia(
+          catalog.media,
+          catalog.products,
+          catalog.categories
+        );
+        if (cleaned.removedCount > 0) {
+          try {
+            saveMedia(cleaned.media);
+            setMedia(cleaned.media);
+            mediaRef.current = cleaned.media;
+          } catch {
+            setMedia(catalog.media);
+            mediaRef.current = catalog.media;
+          }
+        } else {
           setMedia(catalog.media);
           mediaRef.current = catalog.media;
         }
-      } else {
-        setMedia(catalog.media);
-        mediaRef.current = catalog.media;
+        setBanner(catalog.banner);
+      } catch (error) {
+        if (error instanceof StorageQuotaError) {
+          setStorageError(error.message);
+        }
+        const defaults = getDefaultProducts();
+        setAdminProducts(
+          defaults.map((product) =>
+            enrichProductWithMedia(product, [], getSeedImagesForProduct(product))
+          )
+        );
+        setBrands(getDefaultBrands());
+        setCategories([]);
+        setMedia([]);
+        setBanner(loadBanner());
+      } finally {
+        if (!cancelled) setReady(true);
       }
-      setBanner(catalog.banner);
-    } catch (error) {
-      if (error instanceof StorageQuotaError) {
-        setStorageError(error.message);
-      }
-      const defaults = getDefaultProducts();
-      setAdminProducts(
-        defaults.map((product) =>
-          enrichProductWithMedia(product, [], getSeedImagesForProduct(product))
-        )
-      );
-      setBrands(getDefaultBrands());
-      setCategories([]);
-      setMedia([]);
-      setBanner(loadBanner());
-    } finally {
-      setReady(true);
     }
+
+    void loadCatalog();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const getMediaUrl = useCallback(
@@ -277,6 +341,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
 
       try {
         persist(nextMedia);
+        syncRemoteCatalog();
         return;
       } catch (error) {
         if (!(error instanceof StorageQuotaError)) {
@@ -296,6 +361,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
             `Freed space by removing ${purged.removedCount} unused image(s).`
           );
         }
+        syncRemoteCatalog();
         return;
       } catch (error) {
         if (!(error instanceof StorageQuotaError)) {
@@ -308,6 +374,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         const recompressed = await recompressMediaLibrary(purged.media);
         persist(recompressed);
         setStorageError("Images were recompressed to free storage space.");
+        syncRemoteCatalog();
         return;
       } catch (error) {
         restore();
@@ -318,7 +385,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         throw new Error("Could not save image.");
       }
     },
-    []
+    [syncRemoteCatalog]
   );
 
   const publishedProducts = useMemo(() => {
@@ -343,6 +410,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       try {
         saveProducts(enriched);
         setStorageError(null);
+        syncRemoteCatalog();
       } catch (error) {
         if (error instanceof StorageQuotaError) {
           setStorageError(error.message);
@@ -351,7 +419,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [enrichProducts]
+    [enrichProducts, syncRemoteCatalog]
   );
 
   const addProduct = useCallback(
@@ -524,6 +592,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       try {
         saveBrands(next);
         setStorageError(null);
+        syncRemoteCatalog();
       } catch (error) {
         if (error instanceof StorageQuotaError) {
           setStorageError(error.message);
@@ -532,7 +601,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [brands]
+    [brands, syncRemoteCatalog]
   );
 
   const addBrand = useCallback(
@@ -562,6 +631,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       try {
         saveBrands(next);
         setStorageError(null);
+        syncRemoteCatalog();
       } catch (error) {
         if (error instanceof StorageQuotaError) {
           setStorageError(error.message);
@@ -572,7 +642,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       }
       return brand;
     },
-    [brands]
+    [brands, syncRemoteCatalog]
   );
 
   const updateCategories = useCallback(
@@ -589,6 +659,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       try {
         saveCategories(normalized);
         setStorageError(null);
+        syncRemoteCatalog();
       } catch (error) {
         if (error instanceof StorageQuotaError) {
           setStorageError(error.message);
@@ -612,7 +683,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         );
       }
     },
-    [categories, adminProducts, persistProducts]
+    [categories, adminProducts, persistProducts, syncRemoteCatalog]
   );
 
   const getBrandBySlugFn = useCallback(
@@ -670,6 +741,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       mediaRef.current = result.media;
       setMedia(result.media);
       setStorageError(null);
+      syncRemoteCatalog();
       return result.removedCount;
     } catch (error) {
       if (error instanceof StorageQuotaError) {
@@ -679,7 +751,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       }
       return 0;
     }
-  }, []);
+  }, [syncRemoteCatalog]);
 
   const unusedMediaCount = useMemo(
     () => removeUnusedMedia(media, adminProducts, categories).removedCount,
@@ -693,6 +765,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       try {
         saveMedia(next);
         setStorageError(null);
+        syncRemoteCatalog();
       } catch (error) {
         if (error instanceof StorageQuotaError) {
           setStorageError(error.message);
@@ -701,7 +774,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [media]
+    [media, syncRemoteCatalog]
   );
 
   const resetAdminStorage = useCallback(() => {
@@ -716,6 +789,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       mediaRef.current = snapshot.media;
       setBanner(snapshot.banner);
       setStorageError(null);
+      syncRemoteCatalog();
     } catch (error) {
       if (error instanceof StorageQuotaError) {
         setStorageError(error.message);
@@ -723,7 +797,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setStorageError("Could not reset storage.");
       }
     }
-  }, [enrichProducts]);
+  }, [enrichProducts, syncRemoteCatalog]);
 
   const exportCatalogBackup = useCallback(() => {
     const backup = createCatalogBackup({
@@ -743,6 +817,18 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       const backup = parseCatalogBackup(text);
 
       try {
+        if (isRemoteCatalogEnabled()) {
+          const snapshot = await restoreRemoteCatalog(text);
+          setAdminProducts(snapshot.products);
+          setBrands(snapshot.brands);
+          setCategories(snapshot.categories);
+          setMedia(snapshot.media);
+          mediaRef.current = snapshot.media;
+          setBanner(snapshot.banner);
+          setStorageError(null);
+          return getCatalogBackupSummary(backup);
+        }
+
         const snapshot = applyCatalogBackup(backup);
         setAdminProducts(snapshot.products);
         setBrands(snapshot.brands);
@@ -757,7 +843,11 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
           setStorageError(error.message);
           throw new Error(error.message);
         }
-        throw new Error("Could not restore backup. The file may be too large.");
+        throw new Error(
+          error instanceof Error
+            ? error.message
+            : "Could not restore backup. The file may be too large."
+        );
       }
     },
     []
@@ -769,6 +859,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       try {
         saveBanner(next);
         setStorageError(null);
+        syncRemoteCatalog();
       } catch (error) {
         if (error instanceof StorageQuotaError) {
           setStorageError(error.message);
@@ -778,7 +869,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       }
       return next;
     });
-  }, []);
+  }, [syncRemoteCatalog]);
 
   const getProductBySlug = useCallback(
     (slug: string) => publishedProducts.find((p) => p.slug === slug),
