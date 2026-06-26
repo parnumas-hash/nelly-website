@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:vercel": "npx vercel env run --environment=production -- npm run dev",
+    "env:sync": "npx vercel env run --environment=production -- node scripts/sync-env-from-vercel.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "pull:production": "node scripts/pull-production-backup.mjs",
+    "restore:local": "node scripts/restore-local-backup.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

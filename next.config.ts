@@ -4,6 +4,24 @@ const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
   : null;
 
+const supabaseRemotePatterns = [
+  {
+    protocol: "https" as const,
+    hostname: "**.supabase.co",
+    pathname: "/storage/v1/object/public/**",
+  },
+  ...(supabaseHostname &&
+  !supabaseHostname.endsWith(".supabase.co")
+    ? [
+        {
+          protocol: "https" as const,
+          hostname: supabaseHostname,
+          pathname: "/storage/v1/object/public/**",
+        },
+      ]
+    : []),
+];
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -17,15 +35,7 @@ const nextConfig: NextConfig = {
         hostname: "plus.unsplash.com",
         pathname: "/**",
       },
-      ...(supabaseHostname
-        ? [
-            {
-              protocol: "https" as const,
-              hostname: supabaseHostname,
-              pathname: "/storage/v1/object/public/**",
-            },
-          ]
-        : []),
+      ...(supabaseRemotePatterns),
     ],
     formats: ["image/avif", "image/webp"],
   },

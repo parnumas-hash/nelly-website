@@ -80,6 +80,7 @@ import {
   type CatalogSyncSnapshot,
 } from "@/lib/admin/catalog-sync";
 import { normalizeCatalogSnapshot } from "@/lib/admin/catalog-normalize";
+import { fetchStagedLocalRestore } from "@/lib/admin/local-restore";
 import { getDefaultCatalogSnapshot } from "@/lib/supabase/catalog-store";
 import { CATALOG_VERSION } from "@/lib/admin/storage";
 
@@ -311,6 +312,20 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
 
       try {
+        const stagedBackup = await fetchStagedLocalRestore();
+        if (stagedBackup && !cancelled) {
+          const snapshot = applyCatalogBackup(stagedBackup);
+          setAdminProducts(snapshot.products);
+          setBrands(snapshot.brands);
+          setCategories(snapshot.categories);
+          setMedia(snapshot.media);
+          mediaRef.current = snapshot.media;
+          setBanner(snapshot.banner);
+          setStorageError(null);
+          setReady(true);
+          return;
+        }
+
         const catalog = initializeCatalogFromStorage();
         setAdminProducts(catalog.products);
         setBrands(catalog.brands);

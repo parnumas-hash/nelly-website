@@ -32,6 +32,11 @@ yarn-error.log*
 .env*
 !.env.example
 
+# dev restore staging
+/data/staged-local-restore.json
+/data/nelly-production-backup-*.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.vercel
