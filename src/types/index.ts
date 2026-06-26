@@ -103,12 +103,6 @@ export interface BrandFormData {
   slug: string;
   tagline: string;
   description: string;
-  active: boolean;
-}
-
-export interface BrandFormData {
-  displayName: string;
-  tagline: string;
   image: string;
   hasCustomImage: boolean;
   active: boolean;

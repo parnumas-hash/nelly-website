@@ -6,7 +6,6 @@ import {
   LegacySeedProduct,
   MediaItem,
   Product,
-  ProductPetType,
   ProductVariant,
 } from "@/types";
 import { products as seedProducts, categories as legacyShopCategories } from "@/lib/products";

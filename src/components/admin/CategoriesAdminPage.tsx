@@ -18,7 +18,7 @@ import {
   reorderCategories,
   sortCategories,
 } from "@/lib/brand-categories";
-import { PLACEHOLDER_IMAGE, resolveCategoryImageUrl, shouldUnoptimize } from "@/lib/image-utils";
+import { resolveCategoryImageUrl, shouldUnoptimize } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 
 export default function CategoriesAdminPage() {

@@ -304,7 +304,7 @@ export function variantToFormData(variant: ProductVariant) {
 
 export function resolveVariantThumbnail(
   variant: ProductVariant,
-  product: Pick<AdminProduct, "id" | "slug">,
+  product: Pick<AdminProduct, "id" | "slug" | "name">,
   getMediaUrl: (id: string) => string
 ): string {
   const imageId = variant.imageIds?.[0];

@@ -17,7 +17,7 @@ import {
   VariantMatrixOptions,
   VariantMatrixRow,
 } from "@/lib/variant-matrix";
-import { formatPrice, cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import { shouldUnoptimize } from "@/lib/image-utils";
 
 interface VariantMatrixEditorProps {
@@ -195,7 +195,10 @@ export default function VariantMatrixEditor({
 }: VariantMatrixEditorProps) {
   const { replaceVariants, getAdminProduct } = useCatalog();
   const liveProduct = getAdminProduct(product.id) ?? product;
-  const variants = liveProduct.variants ?? [];
+  const variants = useMemo(
+    () => liveProduct.variants ?? [],
+    [liveProduct.variants]
+  );
 
   const initialOptions = useMemo(
     () => inferMatrixOptions(variants),
@@ -235,7 +238,7 @@ export default function VariantMatrixEditor({
     setOptions(initialOptions);
     setRows(buildMatrixRows(initialOptions, variants));
     setColorImages(inferColorImages(variants));
-  }, [liveProduct.updatedAt]);
+  }, [liveProduct.updatedAt, initialOptions, variants]);
 
   const updateOptions = (patch: Partial<VariantMatrixOptions>) => {
     const next = { ...options, ...patch };

@@ -13,6 +13,8 @@ const emptyForm: BrandFormData = {
   slug: "",
   tagline: "",
   description: "",
+  image: "",
+  hasCustomImage: false,
   active: true,
 };
 

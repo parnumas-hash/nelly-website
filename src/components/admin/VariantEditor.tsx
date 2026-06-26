@@ -33,7 +33,7 @@ export default function VariantEditor({
 
   useEffect(() => {
     setForm(variant ? variantToFormData(variant) : emptyVariantForm());
-  }, [variant?.id]);
+  }, [variant]);
 
   const update = <K extends keyof VariantFormData>(
     key: K,

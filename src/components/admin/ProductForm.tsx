@@ -148,8 +148,6 @@ export default function ProductForm({ initial, mode }: ProductFormProps) {
 
   const activeBrands = brands.filter((brand) => brand.active);
 
-  const selectedBrand = getBrandById(activeBrands, form.brandId);
-
   const availableCategories = getProductFormCategoryOptions(
 
     categories,
