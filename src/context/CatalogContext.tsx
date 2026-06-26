@@ -32,14 +32,17 @@ import {
   initializeCatalogFromStorage,
   loadBanner,
   resetAdminStorageToDefaults,
-  saveBanner,
-  saveBrands,
-  saveCategories,
-  saveMedia,
-  saveProducts,
   StorageQuotaError,
   STORAGE_QUOTA_MESSAGE,
 } from "@/lib/admin/storage";
+import {
+  isCloudCatalogMode,
+  persistBanner as writeBannerLocal,
+  persistBrands as writeBrandsLocal,
+  persistCategories as writeCategoriesLocal,
+  persistMedia as writeMediaLocal,
+  persistProducts as writeProductsLocal,
+} from "@/lib/admin/catalog-persistence";
 import { getProductTotalStock } from "@/lib/variants";
 import { brandToSlug } from "@/lib/utils";
 import { compressImageFile } from "@/lib/media-compress";
@@ -75,6 +78,7 @@ import {
   type CatalogSyncSnapshot,
 } from "@/lib/admin/catalog-sync";
 import { normalizeCatalogSnapshot } from "@/lib/admin/catalog-normalize";
+import { getDefaultCatalogSnapshot } from "@/lib/supabase/catalog-store";
 import { CATALOG_VERSION } from "@/lib/admin/storage";
 
 interface CatalogContextType {
@@ -229,15 +233,31 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const applyCatalogSnapshot = useCallback((snapshot: CatalogSyncSnapshot) => {
-    const normalized = normalizeCatalogSnapshot(snapshot);
-    setAdminProducts(normalized.products);
-    setBrands(normalized.brands);
-    setCategories(normalized.categories);
-    setMedia(normalized.media);
-    mediaRef.current = normalized.media;
-    setBanner(normalized.banner);
-  }, []);
+  const enrichProducts = useCallback(
+    (products: AdminProduct[], mediaItems: MediaItem[]) =>
+      products.map((product) =>
+        enrichProductWithMedia(
+          product,
+          mediaItems,
+          getSeedImagesForProduct(product)
+        )
+      ),
+    []
+  );
+
+  const applyCatalogSnapshot = useCallback(
+    (snapshot: CatalogSyncSnapshot) => {
+      const normalized = normalizeCatalogSnapshot(snapshot);
+      const enriched = enrichProducts(normalized.products, normalized.media);
+      setAdminProducts(enriched);
+      setBrands(normalized.brands);
+      setCategories(normalized.categories);
+      setMedia(normalized.media);
+      mediaRef.current = normalized.media;
+      setBanner(normalized.banner);
+    },
+    [enrichProducts]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -260,6 +280,12 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
             );
           }
         }
+
+        if (!cancelled) {
+          applyCatalogSnapshot(normalizeCatalogSnapshot(null));
+          setReady(true);
+        }
+        return;
       }
 
       if (cancelled) return;
@@ -276,7 +302,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         );
         if (cleaned.removedCount > 0) {
           try {
-            saveMedia(cleaned.media);
+            writeMediaLocal(cleaned.media);
             setMedia(cleaned.media);
             mediaRef.current = cleaned.media;
           } catch {
@@ -321,18 +347,6 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
 
   const clearStorageError = useCallback(() => setStorageError(null), []);
 
-  const enrichProducts = useCallback(
-    (products: AdminProduct[], mediaItems: MediaItem[]) =>
-      products.map((product) =>
-        enrichProductWithMedia(
-          product,
-          mediaItems,
-          getSeedImagesForProduct(product)
-        )
-      ),
-    []
-  );
-
   const commitMedia = useCallback(
     async (nextMedia: MediaItem[], rollback?: MediaItem[]) => {
       const restore = () => {
@@ -342,7 +356,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       };
 
       const persist = (items: MediaItem[]) => {
-        saveMedia(items);
+        writeMediaLocal(items);
         mediaRef.current = items;
         setMedia(items);
         setStorageError(null);
@@ -417,7 +431,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       const enriched = enrichProducts(next, mediaRef.current);
       setAdminProducts(enriched);
       try {
-        saveProducts(enriched);
+        writeProductsLocal(enriched);
         setStorageError(null);
         syncRemoteCatalog();
       } catch (error) {
@@ -599,7 +613,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       const next = brands.map((b) => (b.id === id ? { ...b, ...data } : b));
       setBrands(next);
       try {
-        saveBrands(next);
+        writeBrandsLocal(next);
         setStorageError(null);
         syncRemoteCatalog();
       } catch (error) {
@@ -638,7 +652,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       const next = [...brands, brand];
       setBrands(next);
       try {
-        saveBrands(next);
+        writeBrandsLocal(next);
         setStorageError(null);
         syncRemoteCatalog();
       } catch (error) {
@@ -666,7 +680,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
 
       setCategories(normalized);
       try {
-        saveCategories(normalized);
+        writeCategoriesLocal(normalized);
         setStorageError(null);
         syncRemoteCatalog();
       } catch (error) {
@@ -746,7 +760,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      saveMedia(result.media);
+      writeMediaLocal(result.media);
       mediaRef.current = result.media;
       setMedia(result.media);
       setStorageError(null);
@@ -772,7 +786,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       const next = media.filter((m) => m.id !== id);
       setMedia(next);
       try {
-        saveMedia(next);
+        writeMediaLocal(next);
         setStorageError(null);
         syncRemoteCatalog();
       } catch (error) {
@@ -788,15 +802,17 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
 
   const resetAdminStorage = useCallback(() => {
     try {
-      const snapshot = resetAdminStorageToDefaults();
-      setAdminProducts(
-        enrichProducts(snapshot.products, snapshot.media)
-      );
-      setBrands(snapshot.brands);
-      setCategories(snapshot.categories);
-      setMedia(snapshot.media);
-      mediaRef.current = snapshot.media;
-      setBanner(snapshot.banner);
+      if (isCloudCatalogMode()) {
+        applyCatalogSnapshot(getDefaultCatalogSnapshot());
+      } else {
+        const snapshot = resetAdminStorageToDefaults();
+        setAdminProducts(enrichProducts(snapshot.products, snapshot.media));
+        setBrands(snapshot.brands);
+        setCategories(snapshot.categories);
+        setMedia(snapshot.media);
+        mediaRef.current = snapshot.media;
+        setBanner(snapshot.banner);
+      }
       setStorageError(null);
       syncRemoteCatalog();
     } catch (error) {
@@ -806,7 +822,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setStorageError("Could not reset storage.");
       }
     }
-  }, [enrichProducts, syncRemoteCatalog]);
+  }, [applyCatalogSnapshot, enrichProducts, syncRemoteCatalog]);
 
   const exportCatalogBackup = useCallback(() => {
     const backup = createCatalogBackup({
@@ -861,7 +877,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     setBanner((prev) => {
       const next = { ...(prev ?? loadBanner()), ...data };
       try {
-        saveBanner(next);
+        writeBannerLocal(next);
         setStorageError(null);
         syncRemoteCatalog();
       } catch (error) {

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCatalog } from "@/context/CatalogContext";
+import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 
 export default function AdminStorageAlert() {
   const {
@@ -26,17 +27,19 @@ export default function AdminStorageAlert() {
             {unusedMediaCount === 1 ? "" : "s"} in the media library.
           </p>
         ) : null}
-        <p className="text-xs text-red-700/80 dark:text-red-200/80">
-          Browser storage is limited (~5 MB). Export a backup in{" "}
-          <Link href="/admin/settings" className="font-medium underline">
-            Settings
-          </Link>
-          , remove unused images in{" "}
-          <Link href="/admin/media" className="font-medium underline">
-            Media
-          </Link>
-          .
-        </p>
+        {!isRemoteCatalogEnabled() ? (
+          <p className="text-xs text-red-700/80 dark:text-red-200/80">
+            Browser storage is limited (~5 MB). Export a backup in{" "}
+            <Link href="/admin/settings" className="font-medium underline">
+              Settings
+            </Link>
+            , remove unused images in{" "}
+            <Link href="/admin/media" className="font-medium underline">
+              Media
+            </Link>
+            .
+          </p>
+        ) : null}
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
         {unusedMediaCount > 0 && (

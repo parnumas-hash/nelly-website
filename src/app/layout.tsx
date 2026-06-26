@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/context/Providers";
+import { getSiteUrl } from "@/lib/site-config";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -16,7 +17,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://nellygroup.com"),
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "NELLY GROUP | Premium Pet Lifestyle",
     template: "%s | NELLY GROUP",

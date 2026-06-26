@@ -5,6 +5,7 @@ import { Package, Tags, ImageIcon, Monitor, Plus } from "lucide-react";
 import StatCard from "@/components/admin/StatCard";
 import Button from "@/components/ui/Button";
 import { useCatalog } from "@/context/CatalogContext";
+import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 
 import { getProductTotalStock } from "@/lib/variants";
 
@@ -24,6 +25,9 @@ export default function AdminDashboardPage() {
   const lowStock = adminProducts.filter(
     (p) => getProductTotalStock(p.variants ?? []) < 10
   ).length;
+  const storageLabel = isRemoteCatalogEnabled()
+    ? "Supabase (cloud)"
+    : "Browser localStorage";
 
   const quickLinks = [
     { href: "/admin/products/new", label: "Add Product", icon: Plus },
@@ -94,7 +98,7 @@ export default function AdminDashboardPage() {
             <li className="flex justify-between">
               <span>Data storage</span>
               <span className="font-medium text-neutral-900 dark:text-white">
-                localStorage
+                {storageLabel}
               </span>
             </li>
           </ul>

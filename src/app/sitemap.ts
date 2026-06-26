@@ -1,14 +1,29 @@
 import type { MetadataRoute } from "next";
-import { products } from "@/lib/products";
+import {
+  getServerActiveBrands,
+  getServerPublishedProducts,
+} from "@/lib/catalog/server-catalog";
+import { getSiteUrl } from "@/lib/site-config";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://nellygroup.com";
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = getSiteUrl();
+  const [products, brands] = await Promise.all([
+    getServerPublishedProducts(),
+    getServerActiveBrands(),
+  ]);
 
   const productUrls = products.map((product) => ({
     url: `${baseUrl}/product/${product.slug}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.8,
+  }));
+
+  const brandUrls = brands.map((brand) => ({
+    url: `${baseUrl}/brands/${brand.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
   }));
 
   return [
@@ -42,6 +57,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.3,
     },
+    ...brandUrls,
     ...productUrls,
   ];
 }
