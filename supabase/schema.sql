@@ -24,12 +24,3 @@ on conflict (id) do nothing;
 create policy "Public read catalog media"
 on storage.objects for select
 using (bucket_id = 'catalog-media');
-
--- Newsletter subscribers
-create table if not exists public.newsletter_subscribers (
-  id uuid primary key default gen_random_uuid(),
-  email text not null unique,
-  source text not null default 'homepage',
-  subscribed_at timestamptz not null default now()
-);
-

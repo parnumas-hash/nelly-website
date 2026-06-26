@@ -6,8 +6,6 @@ import {
 import { getLegacySuperAdminSession } from "@/lib/admin/session-types";
 import {
   authenticateAdminUser,
-  countAdminUsers,
-  ensureBootstrapSuperAdmin,
   userRecordToSession,
 } from "@/lib/admin/users-store";
 import { isSupabaseConfigured } from "@/lib/supabase/admin";
@@ -43,34 +41,22 @@ export async function POST(request: Request) {
       );
     }
 
-    if (isSupabaseConfigured()) {
-      await ensureBootstrapSuperAdmin();
-      const userCount = await countAdminUsers();
-
-      if (username) {
-        const user = await authenticateAdminUser(username, password);
-        if (!user) {
-          return NextResponse.json(
-            { error: "Invalid username or password." },
-            { status: 401 }
-          );
-        }
-
-        clearRateLimit(rateKey);
-        const response = NextResponse.json({
-          ok: true,
-          mustChangePassword: user.must_change_password,
-        });
-        setAdminSessionCookie(response, userRecordToSession(user));
-        return response;
-      }
-
-      if (userCount > 0) {
+    if (isSupabaseConfigured() && username) {
+      const user = await authenticateAdminUser(username, password);
+      if (!user) {
         return NextResponse.json(
-          { error: "Username and password are required." },
+          { error: "Invalid username or password." },
           { status: 401 }
         );
       }
+
+      clearRateLimit(rateKey);
+      const response = NextResponse.json({
+        ok: true,
+        mustChangePassword: user.must_change_password,
+      });
+      setAdminSessionCookie(response, userRecordToSession(user));
+      return response;
     }
 
     if (!verifyAdminPasswordLegacy(password)) {

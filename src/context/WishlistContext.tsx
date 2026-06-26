@@ -6,15 +6,12 @@ import {
   useEffect,
   useState,
   useCallback,
-  useMemo,
   type ReactNode,
 } from "react";
 import { Product } from "@/types";
-import { useCatalog } from "@/context/CatalogContext";
 
 interface WishlistContextType {
   items: Product[];
-  itemIds: string[];
   addItem: (product: Product) => void;
   removeItem: (productId: string) => void;
   isInWishlist: (productId: string) => boolean;
@@ -27,26 +24,14 @@ const WishlistContext = createContext<WishlistContextType | undefined>(
 
 const STORAGE_KEY = "nelly-wishlist";
 
-function migrateWishlistIds(stored: unknown): string[] {
-  if (!Array.isArray(stored)) return [];
-  if (stored.length === 0) return [];
-  if (typeof stored[0] === "string") {
-    return stored.filter((id): id is string => typeof id === "string");
-  }
-  return (stored as Product[])
-    .map((product) => product?.id)
-    .filter((id): id is string => typeof id === "string");
-}
-
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  const { publishedProducts, ready } = useCatalog();
-  const [itemIds, setItemIds] = useState<string[]>([]);
+  const [items, setItems] = useState<Product[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setItemIds(migrateWishlistIds(JSON.parse(stored)));
+      if (stored) setItems(JSON.parse(stored));
     } catch {
       /* ignore */
     }
@@ -55,31 +40,24 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (hydrated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(itemIds));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     }
-  }, [itemIds, hydrated]);
-
-  const items = useMemo(() => {
-    if (!ready) return [];
-    return itemIds
-      .map((id) => publishedProducts.find((product) => product.id === id))
-      .filter((product): product is Product => product !== undefined);
-  }, [itemIds, publishedProducts, ready]);
+  }, [items, hydrated]);
 
   const addItem = useCallback((product: Product) => {
-    setItemIds((prev) => {
-      if (prev.includes(product.id)) return prev;
-      return [...prev, product.id];
+    setItems((prev) => {
+      if (prev.some((p) => p.id === product.id)) return prev;
+      return [...prev, product];
     });
   }, []);
 
   const removeItem = useCallback((productId: string) => {
-    setItemIds((prev) => prev.filter((id) => id !== productId));
+    setItems((prev) => prev.filter((p) => p.id !== productId));
   }, []);
 
   const isInWishlist = useCallback(
-    (productId: string) => itemIds.includes(productId),
-    [itemIds]
+    (productId: string) => items.some((p) => p.id === productId),
+    [items]
   );
 
   const toggleItem = useCallback(
@@ -95,7 +73,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   return (
     <WishlistContext.Provider
-      value={{ items, itemIds, addItem, removeItem, isInWishlist, toggleItem }}
+      value={{ items, addItem, removeItem, isInWishlist, toggleItem }}
     >
       {children}
     </WishlistContext.Provider>
