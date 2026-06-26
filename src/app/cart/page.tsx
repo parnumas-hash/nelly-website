@@ -16,7 +16,7 @@ import { useCart } from "@/context/CartContext";
 import { formatPrice, getShippingFee } from "@/lib/utils";
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, totalPrice, clearCart } =
+  const { items, removeItem, updateQuantity, totalPrice, clearCart, getLineStockLimit } =
     useCart();
 
   if (items.length === 0) {
@@ -67,6 +67,7 @@ export default function CartPage() {
                 const variant = resolveCartVariant(item);
                 const unitPrice = getCartItemPrice(item);
                 const thumb = getCartItemThumb(item);
+                const stockLimit = getLineStockLimit(item.product.id, lineKey);
 
                 return (
                 <li
@@ -136,7 +137,8 @@ export default function CartPage() {
                               item.quantity + 1
                             )
                           }
-                          className="flex h-9 w-9 items-center justify-center hover:text-primary"
+                          disabled={item.quantity >= stockLimit}
+                          className="flex h-9 w-9 items-center justify-center hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <Plus className="h-3 w-3" />
                         </button>

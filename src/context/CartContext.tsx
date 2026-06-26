@@ -13,7 +13,10 @@ import { repairStorefrontProduct } from "@/lib/image-utils";
 import {
   getCartItemKey,
   getCartItemPrice,
+  getMaxAddQuantity,
+  getVariantStockLimit,
   normalizeVariant,
+  resolveCartVariant,
   resolveProductVariantForAdd,
 } from "@/lib/variants";
 
@@ -35,6 +38,7 @@ interface CartContextType {
   totalPrice: number;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  getLineStockLimit: (productId: string, lineKey: string) => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -76,6 +80,13 @@ function matchesLine(item: CartItem, productId: string, lineKey: string): boolea
   return item.product.id === productId && getCartItemKey(item) === lineKey;
 }
 
+function clampItemQuantity(item: CartItem, quantity: number): number {
+  const variant = resolveCartVariant(item);
+  const limit = getVariantStockLimit(variant);
+  if (limit <= 0) return 0;
+  return Math.min(Math.max(1, quantity), limit);
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -86,7 +97,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as Record<string, unknown>[];
-        setItems(parsed.map(normalizeStoredCartItem));
+        const normalized = parsed.map(normalizeStoredCartItem);
+        setItems(
+          normalized
+            .map((item) => ({
+              ...item,
+              quantity: clampItemQuantity(item, item.quantity),
+            }))
+            .filter((item) => item.quantity > 0)
+        );
       }
     } catch {
       /* ignore corrupt cart data */
@@ -100,17 +119,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, hydrated]);
 
+  const getLineStockLimit = useCallback(
+    (productId: string, lineKey: string) => {
+      const item = items.find((i) => matchesLine(i, productId, lineKey));
+      if (!item) return 0;
+      return getVariantStockLimit(resolveCartVariant(item));
+    },
+    [items]
+  );
+
   const addItem = useCallback(
     (product: Product, variant?: ProductVariant | null, quantity = 1) => {
       const resolved = resolveProductVariantForAdd(product, variant);
       const lineKey = `${product.id}-${resolved.id}`;
+      const stockLimit = getVariantStockLimit(resolved);
+      if (stockLimit <= 0) return;
 
       setItems((prev) => {
         const existing = prev.find((i) => getCartItemKey(i) === lineKey);
+        const currentQty = existing?.quantity ?? 0;
+        const maxAdd = getMaxAddQuantity(resolved, currentQty);
+        if (maxAdd <= 0) return prev;
+
+        const addQty = Math.min(quantity, maxAdd);
+
         if (existing) {
           return prev.map((i) =>
             getCartItemKey(i) === lineKey
-              ? { ...i, quantity: i.quantity + quantity, variant: resolved }
+              ? {
+                  ...i,
+                  quantity: currentQty + addQty,
+                  variant: resolved,
+                }
               : i
           );
         }
@@ -119,7 +159,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           {
             product,
             variant: resolved,
-            quantity,
+            quantity: addQty,
             selectedColor: resolved.color,
             selectedSize: resolved.size,
             selectedScent: resolved.scent,
@@ -144,9 +184,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return;
       }
       setItems((prev) =>
-        prev.map((i) =>
-          matchesLine(i, productId, lineKey) ? { ...i, quantity } : i
-        )
+        prev.map((i) => {
+          if (!matchesLine(i, productId, lineKey)) return i;
+          return { ...i, quantity: clampItemQuantity(i, quantity) };
+        })
       );
     },
     [removeItem]
@@ -172,6 +213,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         totalPrice,
         isOpen,
         setIsOpen,
+        getLineStockLimit,
       }}
     >
       {children}

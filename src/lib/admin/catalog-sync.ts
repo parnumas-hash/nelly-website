@@ -5,6 +5,7 @@ import {
   HeroBanner,
   MediaItem,
 } from "@/types";
+import { isSupabaseConfigured } from "@/lib/supabase/admin";
 
 export interface CatalogSyncSnapshot {
   catalogVersion?: number;
@@ -16,7 +17,7 @@ export interface CatalogSyncSnapshot {
 }
 
 export function isRemoteCatalogEnabled(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  return isSupabaseConfigured();
 }
 
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
@@ -83,6 +84,17 @@ export function scheduleRemoteCatalogSync(snapshot: CatalogSyncSnapshot): void {
   }, 500);
 }
 
+function parseCatalogResponse(
+  data: CatalogSyncSnapshot & { empty?: boolean }
+): CatalogSyncSnapshot | null {
+  if (data.empty) return null;
+  if (!Array.isArray(data.products) || !Array.isArray(data.brands)) {
+    throw new Error("Invalid catalog response from server.");
+  }
+  return data;
+}
+
+/** Storefront — published products only. */
 export async function fetchRemoteCatalog(): Promise<CatalogSyncSnapshot | null> {
   if (!isRemoteCatalogEnabled()) return null;
 
@@ -94,13 +106,25 @@ export async function fetchRemoteCatalog(): Promise<CatalogSyncSnapshot | null> 
   const data = (await response.json()) as CatalogSyncSnapshot & {
     empty?: boolean;
   };
+  return parseCatalogResponse(data);
+}
 
-  if (data.empty) return null;
-  if (!Array.isArray(data.products) || !Array.isArray(data.brands)) {
-    throw new Error("Invalid catalog response from server.");
+/** Admin — full catalog including drafts; requires admin session cookie. */
+export async function fetchRemoteCatalogAdmin(): Promise<CatalogSyncSnapshot | null> {
+  if (!isRemoteCatalogEnabled()) return null;
+
+  const response = await fetch("/api/catalog/admin", { cache: "no-store" });
+  if (response.status === 401) {
+    throw new Error("Admin session expired. Please sign in again.");
+  }
+  if (!response.ok) {
+    throw new Error("Could not load admin catalog from server.");
   }
 
-  return data;
+  const data = (await response.json()) as CatalogSyncSnapshot & {
+    empty?: boolean;
+  };
+  return parseCatalogResponse(data);
 }
 
 export async function restoreRemoteCatalog(

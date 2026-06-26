@@ -7,9 +7,10 @@ import {
   loadCatalogFromDb,
 } from "@/lib/supabase/catalog-store";
 import { isSupabaseConfigured } from "@/lib/supabase/admin";
-import { AdminBrand, Product } from "@/types";
+import { AdminBrand, BrandCategory, Product, ProductFilters } from "@/types";
 import { sortBrandsAlphabetically } from "@/lib/brand-categories";
 import { CatalogSyncSnapshot } from "@/lib/admin/catalog-sync";
+import { filterPublishedProducts } from "@/lib/catalog/filter-products";
 
 export async function getServerCatalogSnapshot(): Promise<CatalogSyncSnapshot> {
   if (isSupabaseConfigured()) {
@@ -55,5 +56,31 @@ export async function getServerBrandBySlug(
 
 export async function getServerActiveBrands(): Promise<AdminBrand[]> {
   const catalog = await getServerCatalogSnapshot();
-  return sortBrandsAlphabetically(catalog.brands).filter((brand) => brand.active);
+  return sortBrandsAlphabetically(catalog.brands).filter(
+    (brand) => brand.active
+  );
+}
+
+export async function getServerShopListing(
+  filters: ProductFilters = {}
+): Promise<{
+  products: Product[];
+  brands: AdminBrand[];
+  categories: BrandCategory[];
+}> {
+  const catalog = await getServerCatalogSnapshot();
+  const products = await getServerPublishedProducts();
+  const brands = await getServerActiveBrands();
+  const filtered = filterPublishedProducts(
+    products,
+    brands,
+    catalog.categories,
+    filters
+  );
+
+  return {
+    products: filtered,
+    brands,
+    categories: catalog.categories,
+  };
 }

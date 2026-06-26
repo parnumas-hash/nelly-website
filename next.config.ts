@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import { validateProductionEnv } from "./src/lib/env";
+
+validateProductionEnv();
 
 const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname

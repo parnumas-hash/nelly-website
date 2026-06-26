@@ -24,6 +24,7 @@ export default function CartDrawer() {
     updateQuantity,
     totalPrice,
     totalItems,
+    getLineStockLimit,
   } = useCart();
 
   return (
@@ -76,6 +77,10 @@ export default function CartDrawer() {
                       const variant = resolveCartVariant(item);
                       const unitPrice = getCartItemPrice(item);
                       const thumb = getCartItemThumb(item);
+                      const stockLimit = getLineStockLimit(
+                        item.product.id,
+                        lineKey
+                      );
 
                       return (
                         <li key={lineKey} className="flex gap-4">
@@ -140,7 +145,8 @@ export default function CartDrawer() {
                                       item.quantity + 1
                                     )
                                   }
-                                  className="flex h-8 w-8 items-center justify-center hover:text-primary"
+                                  disabled={item.quantity >= stockLimit}
+                                  className="flex h-8 w-8 items-center justify-center hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                   <Plus className="h-3 w-3" />
                                 </button>

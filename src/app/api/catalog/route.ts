@@ -10,8 +10,9 @@ import { enrichProductWithMedia } from "@/lib/media-library";
 import { getSeedImagesForProduct } from "@/lib/image-utils";
 import { sortBrandsAlphabetically } from "@/lib/brand-categories";
 import { CATALOG_VERSION } from "@/lib/admin/storage";
-import { normalizeCatalogSnapshot } from "@/lib/admin/catalog-normalize";
+import { toPublicCatalogResponse } from "@/lib/catalog/public-catalog";
 
+/** Public storefront catalog — published products only, no draft data. */
 export async function GET() {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({ empty: true, configured: false });
@@ -19,24 +20,7 @@ export async function GET() {
 
   try {
     const snapshot = await loadCatalogFromDb();
-    const normalized = normalizeCatalogSnapshot(snapshot);
-
-    const products = normalized.products.map((product) =>
-      enrichProductWithMedia(
-        product,
-        normalized.media,
-        getSeedImagesForProduct(product)
-      )
-    );
-
-    return NextResponse.json({
-      catalogVersion: normalized.catalogVersion,
-      products,
-      brands: sortBrandsAlphabetically(normalized.brands),
-      categories: normalized.categories,
-      media: normalized.media,
-      banner: normalized.banner,
-    });
+    return NextResponse.json(toPublicCatalogResponse(snapshot));
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to load catalog.";

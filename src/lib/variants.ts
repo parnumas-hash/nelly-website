@@ -90,6 +90,20 @@ export function getVariantDisplayPrice(
   return { price: 0 };
 }
 
+export function getVariantStockLimit(variant?: ProductVariant | null): number {
+  if (!variant) return 0;
+  if (variant.status === "out-of-stock") return 0;
+  const stock = typeof variant.stock === "number" ? variant.stock : 0;
+  return Math.max(0, stock);
+}
+
+export function getMaxAddQuantity(
+  variant: ProductVariant,
+  currentQtyInCart: number
+): number {
+  return Math.max(0, getVariantStockLimit(variant) - currentQtyInCart);
+}
+
 export function isVariantInStock(variant?: ProductVariant | null): boolean {
   if (!variant) return false;
   const stock = typeof variant.stock === "number" ? variant.stock : 0;

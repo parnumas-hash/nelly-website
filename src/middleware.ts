@@ -23,8 +23,11 @@ function isProtectedCatalogWrite(pathname: string, method: string): boolean {
 }
 
 function isProtectedAdminApi(pathname: string): boolean {
-  return pathname.startsWith("/api/admin/users") ||
-    pathname === "/api/admin/change-password";
+  return (
+    pathname.startsWith("/api/admin/users") ||
+    pathname === "/api/admin/change-password" ||
+    pathname === "/api/catalog/admin"
+  );
 }
 
 export async function middleware(request: NextRequest) {
@@ -75,6 +78,7 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/api/catalog",
+    "/api/catalog/admin",
     "/api/catalog/restore",
     "/api/admin/users/:path*",
     "/api/admin/change-password",

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 import { Product } from "@/types";
@@ -25,7 +26,13 @@ interface ProductCardProps {
   index?: number;
 }
 
+function needsVariantSelection(product: Product): boolean {
+  const variants = product.variants ?? [];
+  return hasProductVariants(product) && variants.length > 1;
+}
+
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
+  const router = useRouter();
   const { isInWishlist, toggleItem } = useWishlist();
   const { addItem } = useCart();
   const inWishlist = isInWishlist(product.id);
@@ -34,6 +41,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const defaultVariant = hasProductVariants(product)
     ? variants.find((v) => isVariantInStock(v)) ?? variants[0]
     : undefined;
+  const requireSelection = needsVariantSelection(product);
 
   const thumb = getProductPrimaryImage(product);
   const galleryCount = getProductDisplayImages(product).length;
@@ -46,6 +54,10 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   );
 
   const handleQuickAdd = () => {
+    if (requireSelection) {
+      router.push(`/product/${product.slug}`);
+      return;
+    }
     const variant = resolveProductVariantForAdd(product, defaultVariant ?? null);
     addItem(product, variant);
   };
@@ -99,7 +111,12 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             onClick={handleQuickAdd}
             disabled={!product.inStock}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-neutral-900 backdrop-blur-md transition-colors hover:bg-white disabled:opacity-50 dark:bg-black/60 dark:text-white dark:hover:bg-black/80"
-            aria-label="Add to cart"
+            aria-label={
+              requireSelection ? "Choose options on product page" : "Add to cart"
+            }
+            title={
+              requireSelection ? "Select options on product page" : "Add to cart"
+            }
           >
             <ShoppingBag className="h-4 w-4" />
           </button>

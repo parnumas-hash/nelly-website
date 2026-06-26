@@ -91,6 +91,22 @@ export function validateUsername(username: string): string | null {
   return null;
 }
 
+export async function countAdminUsers(): Promise<number> {
+  if (!isSupabaseConfigured()) return 0;
+
+  const client = createAdminClient();
+  const { count, error } = await client
+    .from("admin_users")
+    .select("id", { count: "exact", head: true });
+
+  if (error) {
+    if (error.message.includes("admin_users")) return 0;
+    throw new Error(error.message);
+  }
+
+  return count ?? 0;
+}
+
 export async function listAdminUsers(): Promise<AdminUserPublic[]> {
   const client = createAdminClient();
   const { data, error } = await client
