@@ -1,9 +1,9 @@
 import { CatalogSyncSnapshot } from "@/lib/admin/catalog-sync";
 import {
   CATALOG_VERSION,
+  getDefaultBanner,
   getDefaultBrands,
   getDefaultProducts,
-  loadBanner,
 } from "@/lib/admin/storage";
 import { normalizeBrandCategories } from "@/lib/brand-categories";
 import { HeroBanner } from "@/types";
@@ -11,7 +11,7 @@ import { HeroBanner } from "@/types";
 export function normalizeCatalogSnapshot(
   snapshot: Partial<CatalogSyncSnapshot> | null | undefined
 ): CatalogSyncSnapshot {
-  const fallbackBanner = loadBanner();
+  const fallbackBanner = getDefaultBanner();
 
   return {
     catalogVersion: snapshot?.catalogVersion ?? CATALOG_VERSION,

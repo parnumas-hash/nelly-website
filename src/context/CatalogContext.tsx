@@ -29,6 +29,7 @@ import {
   generateSlug,
   getDefaultProducts,
   getDefaultBrands,
+  getDefaultBanner,
   initializeCatalogFromStorage,
   loadBanner,
   resetAdminStorageToDefaults,
@@ -75,6 +76,7 @@ import {
   isRemoteCatalogEnabled,
   restoreRemoteCatalog,
   scheduleRemoteCatalogSync,
+  setCatalogSyncHandlers,
   type CatalogSyncSnapshot,
 } from "@/lib/admin/catalog-sync";
 import { normalizeCatalogSnapshot } from "@/lib/admin/catalog-normalize";
@@ -220,6 +222,24 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     bannerRef.current = banner;
   }, [banner]);
 
+  const resolveBannerFallback = useCallback(
+    () => (isRemoteCatalogEnabled() ? getDefaultBanner() : loadBanner()),
+    []
+  );
+
+  useEffect(() => {
+    setCatalogSyncHandlers({
+      onError: (message) =>
+        setStorageError(`Cloud save failed: ${message}`),
+      onSuccess: () => {
+        setStorageError((current) =>
+          current?.startsWith("Cloud save failed:") ? null : current
+        );
+      },
+    });
+    return () => setCatalogSyncHandlers({});
+  }, []);
+
   const syncRemoteCatalog = useCallback(() => {
     scheduleRemoteCatalogSync(
       normalizeCatalogSnapshot({
@@ -228,10 +248,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         brands: brandsRef.current,
         categories: categoriesRef.current,
         media: mediaRef.current,
-        banner: bannerRef.current ?? loadBanner(),
+        banner: bannerRef.current ?? resolveBannerFallback(),
       })
     );
-  }, []);
+  }, [resolveBannerFallback]);
 
   const enrichProducts = useCallback(
     (products: AdminProduct[], mediaItems: MediaItem[]) =>
@@ -830,11 +850,11 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       brands,
       categories,
       media: mediaRef.current,
-      banner: banner ?? loadBanner(),
+      banner: banner ?? resolveBannerFallback(),
     });
     downloadCatalogBackup(backup);
     setStorageError(null);
-  }, [brands, categories, banner]);
+  }, [brands, categories, banner, resolveBannerFallback]);
 
   const restoreCatalogBackup = useCallback(
     async (file: File) => {
@@ -875,7 +895,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
 
   const updateBanner = useCallback((data: Partial<HeroBanner>) => {
     setBanner((prev) => {
-      const next = { ...(prev ?? loadBanner()), ...data };
+      const next = { ...(prev ?? resolveBannerFallback()), ...data };
       try {
         writeBannerLocal(next);
         setStorageError(null);
@@ -889,7 +909,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       }
       return next;
     });
-  }, [syncRemoteCatalog]);
+  }, [syncRemoteCatalog, resolveBannerFallback]);
 
   const getProductBySlug = useCallback(
     (slug: string) => publishedProducts.find((p) => p.slug === slug),
@@ -1000,7 +1020,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     brands: sortedBrands,
     categories,
     media,
-    banner: banner ?? loadBanner(),
+    banner: banner ?? resolveBannerFallback(),
     addProduct,
     updateProduct,
     deleteProduct,

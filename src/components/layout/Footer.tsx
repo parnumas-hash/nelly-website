@@ -1,7 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Instagram, Facebook, Mail } from "lucide-react";
 import Logo from "@/components/ui/Logo";
-import { brands } from "@/lib/brands";
+import { useCatalog } from "@/context/CatalogContext";
 
 const footerLinks = {
   shop: [
@@ -12,10 +14,6 @@ const footerLinks = {
     { label: "Home Living", href: "/shop?category=beds" },
     { label: "Eco Friendly", href: "/shop?category=eco" },
   ],
-  brands: brands.map((b) => ({
-    label: b.displayName,
-    href: `/shop?brand=${b.slug}`,
-  })),
   company: [
     { label: "About NELLY GROUP", href: "/#about" },
     { label: "Store Locator", href: "/#stores" },
@@ -31,6 +29,14 @@ const footerLinks = {
 };
 
 export default function Footer() {
+  const { brands } = useCatalog();
+  const brandLinks = brands
+    .filter((brand) => brand.active)
+    .map((brand) => ({
+      label: brand.displayName,
+      href: `/brands/${brand.slug}`,
+    }));
+
   return (
     <footer className="border-t border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20">
@@ -86,8 +92,8 @@ export default function Footer() {
               Brands
             </h3>
             <ul className="space-y-3">
-              {footerLinks.brands.map((link) => (
-                <li key={link.label}>
+              {brandLinks.map((link) => (
+                <li key={link.href}>
                   <Link
                     href={link.href}
                     className="text-sm text-neutral-500 transition-colors hover:text-primary"

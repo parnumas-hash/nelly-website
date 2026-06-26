@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import ProductDetail from "@/components/product/ProductDetail";
+import ProductJsonLd from "@/components/seo/ProductJsonLd";
 import { getServerProductBySlug } from "@/lib/catalog/server-catalog";
 import { getSiteUrl } from "@/lib/site-config";
 
@@ -34,5 +36,14 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
-  return <ProductDetail slug={slug} />;
+  const product = await getServerProductBySlug(slug);
+
+  if (!product) notFound();
+
+  return (
+    <>
+      <ProductJsonLd product={product} />
+      <ProductDetail slug={slug} initialProduct={product} />
+    </>
+  );
 }

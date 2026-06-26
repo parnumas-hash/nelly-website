@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import BrandDetailPage from "@/components/brand/BrandDetailPage";
+import BrandJsonLd from "@/components/seo/BrandJsonLd";
 import { getServerBrandBySlug } from "@/lib/catalog/server-catalog";
 import { getSiteUrl } from "@/lib/site-config";
 import { getBrandDisplayImage } from "@/lib/image-utils";
@@ -35,5 +37,14 @@ export async function generateMetadata({
 
 export default async function BrandPage({ params }: PageProps) {
   const { slug } = await params;
-  return <BrandDetailPage slug={slug} />;
+  const brand = await getServerBrandBySlug(slug);
+
+  if (!brand) notFound();
+
+  return (
+    <>
+      <BrandJsonLd brand={brand} />
+      <BrandDetailPage slug={slug} initialBrand={brand} />
+    </>
+  );
 }

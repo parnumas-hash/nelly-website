@@ -17,9 +17,11 @@ import {
   getBrandDisplayImage,
   shouldUnoptimize,
 } from "@/lib/image-utils";
+import { AdminBrand } from "@/types";
 
 interface BrandDetailPageProps {
   slug: string;
+  initialBrand?: AdminBrand;
 }
 
 function CategorySection({
@@ -61,7 +63,10 @@ function CategorySection({
   );
 }
 
-export default function BrandDetailPage({ slug }: BrandDetailPageProps) {
+export default function BrandDetailPage({
+  slug,
+  initialBrand,
+}: BrandDetailPageProps) {
   const {
     brands,
     categories,
@@ -70,7 +75,9 @@ export default function BrandDetailPage({ slug }: BrandDetailPageProps) {
     getBrandBySlug: getBrand,
     filterProducts,
   } = useCatalog();
-  const brand = ready ? getBrand(slug) ?? getBrandBySlug(brands, slug) : undefined;
+  const brand =
+    (ready ? getBrand(slug) ?? getBrandBySlug(brands, slug) : undefined) ??
+    initialBrand;
 
   const products = useMemo(
     () =>
@@ -80,7 +87,7 @@ export default function BrandDetailPage({ slug }: BrandDetailPageProps) {
     [ready, brand, filterProducts]
   );
 
-  if (!ready) {
+  if (!ready && !initialBrand) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-neutral-400">
         Loading...

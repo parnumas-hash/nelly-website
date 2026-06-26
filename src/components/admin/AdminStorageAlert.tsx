@@ -39,6 +39,11 @@ export default function AdminStorageAlert() {
             </Link>
             .
           </p>
+        ) : storageError?.startsWith("Cloud save failed:") ? (
+          <p className="text-xs text-red-700/80 dark:text-red-200/80">
+            Changes were saved locally but could not sync to Supabase. Retry by
+            editing and saving again, or check your connection.
+          </p>
         ) : null}
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">

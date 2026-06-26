@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/context/Providers";
+import OrganizationJsonLd from "@/components/seo/OrganizationJsonLd";
 import { getSiteUrl } from "@/lib/site-config";
 
 const inter = Inter({
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://nellygroup.com",
+    url: getSiteUrl(),
     siteName: "NELLY GROUP",
     title: "NELLY GROUP | Premium Pet Lifestyle",
     description:
@@ -52,6 +53,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
+        <OrganizationJsonLd />
         <Providers>{children}</Providers>
       </body>
     </html>

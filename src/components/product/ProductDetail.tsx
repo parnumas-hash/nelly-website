@@ -28,14 +28,16 @@ import {
   isVariantInStock,
   resolveProductVariantForAdd,
 } from "@/lib/variants";
+import { Product } from "@/types";
 
 interface ProductDetailProps {
   slug: string;
+  initialProduct?: Product;
 }
 
-export default function ProductDetail({ slug }: ProductDetailProps) {
+export default function ProductDetail({ slug, initialProduct }: ProductDetailProps) {
   const { getProductBySlug, ready } = useCatalog();
-  const product = getProductBySlug(slug);
+  const product = getProductBySlug(slug) ?? initialProduct;
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
 
@@ -159,7 +161,7 @@ export default function ProductDetail({ slug }: ProductDetailProps) {
     }
   }, [product, colors, selectedColor]);
 
-  if (!ready) {
+  if (!ready && !initialProduct) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-neutral-400">
         Loading...

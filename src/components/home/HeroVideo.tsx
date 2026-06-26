@@ -5,12 +5,15 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCatalog } from "@/context/CatalogContext";
+import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 import { loadBanner } from "@/lib/admin/storage";
 
 export default function HeroVideo() {
   const prefersReducedMotion = useReducedMotion();
   const { banner: catalogBanner, ready } = useCatalog();
-  const banner = { ...loadBanner(), ...catalogBanner };
+  const banner = isRemoteCatalogEnabled()
+    ? catalogBanner
+    : { ...loadBanner(), ...catalogBanner };
 
   const fade = (delay: number) =>
     prefersReducedMotion
@@ -21,7 +24,7 @@ export default function HeroVideo() {
           transition: { delay, duration: 0.6, ease: [0.25, 0.1, 0.25, 1] },
         };
 
-  if (!ready) {
+  if (!ready && !isRemoteCatalogEnabled()) {
     return (
       <section className="relative -mt-16 min-h-[100svh] bg-neutral-900 md:-mt-20" />
     );

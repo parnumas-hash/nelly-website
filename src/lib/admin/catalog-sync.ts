@@ -23,6 +23,17 @@ let syncTimer: ReturnType<typeof setTimeout> | null = null;
 let syncInFlight = false;
 let pendingSnapshot: CatalogSyncSnapshot | null = null;
 
+export interface CatalogSyncHandlers {
+  onError?: (message: string) => void;
+  onSuccess?: () => void;
+}
+
+let syncHandlers: CatalogSyncHandlers = {};
+
+export function setCatalogSyncHandlers(handlers: CatalogSyncHandlers): void {
+  syncHandlers = handlers;
+}
+
 async function pushSnapshot(snapshot: CatalogSyncSnapshot): Promise<void> {
   const response = await fetch("/api/catalog", {
     method: "PUT",
@@ -47,6 +58,13 @@ async function flushQueue(): Promise<void> {
 
   try {
     await pushSnapshot(snapshot);
+    syncHandlers.onSuccess?.();
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Could not save catalog to cloud.";
+    syncHandlers.onError?.(message);
   } finally {
     syncInFlight = false;
     if (pendingSnapshot) {
