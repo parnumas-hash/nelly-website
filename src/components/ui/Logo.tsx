@@ -1,8 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-
-import { BRAND_LOGO_SRC } from "@/lib/brand-assets";
+import {
+  BRAND_LOGO_HEIGHT,
+  BRAND_LOGO_SRC,
+  BRAND_LOGO_WIDTH,
+} from "@/lib/brand-assets";
+import { shouldUnoptimize } from "@/lib/image-utils";
 
 export const LOGO_SRC = BRAND_LOGO_SRC;
 
@@ -38,9 +42,11 @@ export default function Logo({
     <Image
       src={LOGO_SRC}
       alt="NELLY GROUP CO., LTD."
-      width={480}
-      height={240}
+      width={BRAND_LOGO_WIDTH}
+      height={BRAND_LOGO_HEIGHT}
       priority={priority}
+      unoptimized={shouldUnoptimize(LOGO_SRC)}
+      sizes="240px"
       className={cn("w-auto object-contain", sizeClasses[size], imageClassName)}
     />
   );

@@ -1,5 +1,7 @@
 /** Static brand assets in /public/images */
 export const BRAND_LOGO_SRC = "/images/nelly-group-logo.png";
+export const BRAND_LOGO_WIDTH = 600;
+export const BRAND_LOGO_HEIGHT = 600;
 export const HERO_BANNER_IMAGE = "/images/hero-banner.jpg";
 export const HERO_BANNER_WIDTH = 1024;
 export const HERO_BANNER_HEIGHT = 576;
