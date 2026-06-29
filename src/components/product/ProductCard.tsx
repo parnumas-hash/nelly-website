@@ -58,15 +58,20 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       transition={{ delay: index * 0.08, duration: 0.5 }}
       className="group relative"
     >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-900">
-        <Link href={`/product/${product.slug}`}>
-          <SafeImage
-            src={thumb}
-            alt={product.name}
-            fill
-            sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-          />
+      <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#faf8f5] ring-1 ring-neutral-100 dark:bg-neutral-950 dark:ring-neutral-800">
+        <Link
+          href={`/product/${product.slug}`}
+          className="absolute inset-0 p-4 md:p-5"
+        >
+          <div className="relative h-full w-full overflow-hidden">
+            <SafeImage
+              src={thumb}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 50vw, 25vw"
+              className="object-contain object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+            />
+          </div>
         </Link>
 
         {galleryCount > 1 && (

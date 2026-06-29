@@ -238,17 +238,19 @@ export default function ProductDetail({ slug, initialProduct }: ProductDetailPro
               key={`${activeColor}-${activeSize}-${activeScent}-${selectedImage}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="relative aspect-[3/4] overflow-hidden rounded-3xl bg-neutral-100 dark:bg-neutral-900"
+              className="relative aspect-square overflow-hidden rounded-3xl bg-[#faf8f5] p-6 ring-1 ring-neutral-100 md:p-8 dark:bg-neutral-950 dark:ring-neutral-800"
             >
               {displayImages[selectedImage] ? (
-                <SafeImage
-                  src={displayImages[selectedImage]}
-                  alt={product.name}
-                  fill
-                  priority
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
+                <div className="relative h-full w-full">
+                  <SafeImage
+                    src={displayImages[selectedImage]}
+                    alt={product.name}
+                    fill
+                    priority
+                    className="object-contain object-center"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                </div>
               ) : (
                 <div className="flex h-full items-center justify-center text-neutral-400">
                   No image
@@ -267,7 +269,7 @@ export default function ProductDetail({ slug, initialProduct }: ProductDetailPro
                     key={`${activeColor}-${activeSize}-${activeScent}-${i}-${img}`}
                     onClick={() => setSelectedImage(i)}
                     className={cn(
-                      "relative h-20 w-16 overflow-hidden rounded-xl transition-all",
+                      "relative h-20 w-20 overflow-hidden rounded-xl bg-[#faf8f5] p-1.5 transition-all dark:bg-neutral-950",
                       selectedImage === i
                         ? "ring-2 ring-primary ring-offset-2"
                         : "opacity-60 hover:opacity-100"
@@ -277,7 +279,7 @@ export default function ProductDetail({ slug, initialProduct }: ProductDetailPro
                       src={img}
                       alt=""
                       fill
-                      className="object-cover"
+                      className="object-contain object-center"
                     />
                   </button>
                 ))}
