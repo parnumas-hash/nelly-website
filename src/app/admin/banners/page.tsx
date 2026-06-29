@@ -5,6 +5,7 @@ import Image from "next/image";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { useCatalog } from "@/context/CatalogContext";
+import { getDefaultBanner } from "@/lib/admin/storage";
 
 export default function AdminBannersPage() {
   const { banner, updateBanner, ready } = useCatalog();
@@ -19,6 +20,10 @@ export default function AdminBannersPage() {
   }
 
   const save = () => updateBanner(form);
+
+  const applyDefaultBanner = () => setForm(getDefaultBanner());
+
+  const useImageBanner = !form.videoUrl?.trim();
 
   return (
     <div>
@@ -64,12 +69,14 @@ export default function AdminBannersPage() {
             label="Video URL"
             value={form.videoUrl}
             onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+            placeholder="Leave empty to use poster image only"
           />
           <Input
             id="posterUrl"
-            label="Poster Image URL"
+            label="Poster / Banner Image URL"
             value={form.posterUrl}
             onChange={(e) => setForm({ ...form, posterUrl: e.target.value })}
+            placeholder="/images/hero-banner.png"
           />
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -81,6 +88,9 @@ export default function AdminBannersPage() {
             Banner active
           </label>
           <Button onClick={save}>Save Banner</Button>
+          <Button type="button" variant="outline" onClick={applyDefaultBanner}>
+            Use new default banner
+          </Button>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800">
@@ -90,10 +100,14 @@ export default function AdminBannersPage() {
                 src={form.posterUrl}
                 alt="Banner preview"
                 fill
-                className="object-cover opacity-60"
-                unoptimized={form.posterUrl.startsWith("data:")}
+                className={useImageBanner ? "object-cover" : "object-cover opacity-60"}
+                unoptimized={
+                  form.posterUrl.startsWith("data:") ||
+                  form.posterUrl.startsWith("/")
+                }
               />
             )}
+            {!useImageBanner && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white">
               <p className="text-[10px] uppercase tracking-[0.4em] text-white/80">
                 {form.eyebrow}
@@ -106,6 +120,7 @@ export default function AdminBannersPage() {
                 {form.ctaLabel}
               </span>
             </div>
+            )}
           </div>
           <p className="bg-neutral-50 px-4 py-2 text-xs text-neutral-500 dark:bg-neutral-900">
             Live preview

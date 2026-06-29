@@ -2,7 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export const LOGO_SRC = "/images/nelly-group-logo.png";
+import { BRAND_LOGO_SRC } from "@/lib/brand-assets";
+
+export const LOGO_SRC = BRAND_LOGO_SRC;
 
 const sizeClasses = {
   sm: "h-12",

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -31,6 +32,44 @@ export default function HeroVideo() {
   }
 
   if (!banner.active) return null;
+
+  const useImageBanner = !banner.videoUrl?.trim();
+
+  if (useImageBanner) {
+    return (
+      <section
+        aria-label={banner.title}
+        className="relative -mt-16 min-h-[100svh] overflow-hidden md:-mt-20"
+      >
+        <Image
+          src={banner.posterUrl}
+          alt={`${banner.title} — ${banner.subtitle}`}
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="100vw"
+        />
+
+        <Link
+          href={banner.ctaHref}
+          className="absolute inset-0 z-10"
+          aria-label={banner.ctaLabel}
+        />
+
+        <motion.a
+          href="#brands"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1, duration: 0.6 }}
+          className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2 text-neutral-700/70 transition-colors hover:text-neutral-900"
+          aria-label="Scroll to shop by brand"
+        >
+          <span className="text-[10px] uppercase tracking-[0.25em]">Scroll</span>
+          <ChevronDown className="h-5 w-5 animate-bounce" />
+        </motion.a>
+      </section>
+    );
+  }
 
   return (
     <section

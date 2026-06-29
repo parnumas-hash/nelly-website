@@ -10,7 +10,7 @@ import {
 } from "@/types";
 import { products as seedProducts, categories as legacyShopCategories } from "@/lib/products";
 import { brands as seedBrands } from "@/lib/brands";
-import { HERO_POSTER, HERO_VIDEO } from "@/lib/media";
+import { HERO_POSTER } from "@/lib/media";
 import { slugify } from "@/lib/utils";
 import { sortBrandsAlphabetically } from "@/lib/brand-categories";
 import { deriveListingFields, normalizeVariant } from "@/lib/variants";
@@ -361,12 +361,12 @@ function normalizeAdminBrand(stored: AdminBrand, seed: AdminBrand): AdminBrand {
 
 export function getDefaultBanner(): HeroBanner {
   return {
-    eyebrow: "AIRBUGGY PET",
+    eyebrow: "NELLY GROUP",
     title: "Premium Pet Lifestyle",
     subtitle: "A New Journey With Your Best Friend",
     ctaLabel: "Explore Collection",
-    ctaHref: "/shop?brand=airbuggy-pet",
-    videoUrl: HERO_VIDEO,
+    ctaHref: "/shop",
+    videoUrl: "",
     posterUrl: HERO_POSTER,
     active: true,
   };
