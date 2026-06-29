@@ -45,7 +45,7 @@ export default function AdminDashboardPage() {
       ? { href: "/admin/media", label: "Media", icon: ImageIcon }
       : null,
     hasPermission("banners:read")
-      ? { href: "/admin/banners", label: "Banners", icon: Monitor }
+      ? { href: "/admin/site-content", label: "Site Content", icon: Monitor }
       : null,
   ].filter(Boolean) as Array<{
     href: string;

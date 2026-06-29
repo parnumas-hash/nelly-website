@@ -2,6 +2,8 @@ import {
   AdminBrand,
   AdminProduct,
   BrandCategory,
+  AboutSection,
+  FooterBranding,
   HeroBanner,
   MediaItem,
 } from "@/types";
@@ -9,6 +11,8 @@ import {
   CATALOG_VERSION,
   getDefaultBanner,
   getDefaultBrands,
+  getDefaultFooter,
+  getDefaultAbout,
   getDefaultProducts,
 } from "@/lib/admin/storage";
 import { stripProductsForStorage } from "@/lib/media-library";
@@ -23,6 +27,8 @@ export interface CatalogSnapshot {
   categories: BrandCategory[];
   media: MediaItem[];
   banner: HeroBanner;
+  footer: FooterBranding;
+  about: AboutSection;
 }
 
 interface CatalogRow {
@@ -32,6 +38,8 @@ interface CatalogRow {
   categories: BrandCategory[];
   media: MediaItem[];
   banner: HeroBanner;
+  footer?: FooterBranding;
+  about?: AboutSection;
 }
 
 function defaultSnapshot(): CatalogSnapshot {
@@ -42,6 +50,8 @@ function defaultSnapshot(): CatalogSnapshot {
     categories: [],
     media: [],
     banner: getDefaultBanner(),
+    footer: getDefaultFooter(),
+    about: getDefaultAbout(),
   };
 }
 
@@ -132,7 +142,25 @@ export async function loadCatalogFromDb(): Promise<CatalogSnapshot | null> {
     ),
     media: Array.isArray(row.media) ? row.media : [],
     banner: (row.banner as HeroBanner) ?? getDefaultBanner(),
+    footer: (row.footer as FooterBranding) ?? getDefaultFooter(),
+    about: (row.about as AboutSection) ?? getDefaultAbout(),
   };
+}
+
+async function uploadAboutImage(about: AboutSection): Promise<AboutSection> {
+  if (about.imageUrl?.startsWith("data:")) {
+    const url = await ensurePublicUrl(about.imageUrl, "about/image.png");
+    return { ...about, imageUrl: url };
+  }
+  return about;
+}
+
+async function uploadFooterLogo(footer: FooterBranding): Promise<FooterBranding> {
+  if (footer.logoUrl?.startsWith("data:")) {
+    const url = await ensurePublicUrl(footer.logoUrl, "footer/logo.png");
+    return { ...footer, logoUrl: url };
+  }
+  return footer;
 }
 
 async function uploadBannerPoster(banner: HeroBanner): Promise<HeroBanner> {
@@ -154,6 +182,8 @@ export async function saveCatalogToDb(
   const brands = await uploadBrandImages(snapshot.brands);
   const categories = await uploadCategoryImages(snapshot.categories);
   const banner = await uploadBannerPoster(snapshot.banner);
+  const footer = await uploadFooterLogo(snapshot.footer);
+  const about = await uploadAboutImage(snapshot.about);
 
   const products = stripProductsForStorage(snapshot.products);
 
@@ -166,6 +196,8 @@ export async function saveCatalogToDb(
     categories,
     media,
     banner,
+    footer,
+    about,
     updated_at: new Date().toISOString(),
   });
 
@@ -180,6 +212,8 @@ export async function saveCatalogToDb(
     categories,
     media,
     banner,
+    footer,
+    about,
   };
 }
 

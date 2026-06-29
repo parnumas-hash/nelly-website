@@ -36,6 +36,8 @@ export async function GET() {
       categories: normalized.categories,
       media: normalized.media,
       banner: normalized.banner,
+      footer: normalized.footer,
+      about: normalized.about,
     });
   } catch (error) {
     const message =
@@ -68,6 +70,8 @@ export async function PUT(request: Request) {
       categories: body.categories ?? defaults.categories,
       media: body.media ?? defaults.media,
       banner: body.banner ?? defaults.banner,
+      footer: body.footer ?? defaults.footer,
+      about: body.about ?? defaults.about,
     };
 
     const saved = await saveCatalogToDb(snapshot);
@@ -87,6 +91,8 @@ export async function PUT(request: Request) {
       categories: saved.categories,
       media: saved.media,
       banner: saved.banner,
+      footer: saved.footer,
+      about: saved.about,
     });
   } catch (error) {
     const message =

@@ -149,7 +149,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/brands", label: "Brands", permission: "brands:read" },
   { href: "/admin/categories", label: "Categories", permission: "categories:read" },
   { href: "/admin/media", label: "Media", permission: "media:read" },
-  { href: "/admin/banners", label: "Banners", permission: "banners:read" },
+  { href: "/admin/site-content", label: "Site Content", permission: "banners:read" },
   { href: "/admin/settings", label: "Settings", permission: "settings:read" },
   { href: "/admin/users", label: "Users", permission: "users:manage" },
 ];
@@ -165,6 +165,8 @@ export function getRequiredPermissionForPath(pathname: string): Permission | nul
   if (pathname.startsWith("/admin/brands")) return "brands:read";
   if (pathname.startsWith("/admin/categories")) return "categories:read";
   if (pathname.startsWith("/admin/media")) return "media:read";
+  if (pathname.startsWith("/admin/site-content")) return "banners:read";
   if (pathname.startsWith("/admin/banners")) return "banners:read";
+  if (pathname.startsWith("/admin/footer")) return "banners:read";
   return "dashboard:view";
 }

@@ -1,9 +1,11 @@
-import { AdminBrand, AdminProduct, BrandCategory, HeroBanner, MediaItem } from "@/types";
+import { AdminBrand, AdminProduct, BrandCategory, AboutSection, FooterBranding, HeroBanner, MediaItem } from "@/types";
 import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 import {
+  saveAbout,
   saveBanner,
   saveBrands,
   saveCategories,
+  saveFooter,
   saveMedia,
   saveProducts,
 } from "@/lib/admin/storage";
@@ -35,4 +37,14 @@ export function persistMedia(media: MediaItem[]): void {
 export function persistBanner(banner: HeroBanner): void {
   if (isCloudCatalogMode()) return;
   saveBanner(banner);
+}
+
+export function persistFooter(footer: FooterBranding): void {
+  if (isCloudCatalogMode()) return;
+  saveFooter(footer);
+}
+
+export function persistAbout(about: AboutSection): void {
+  if (isCloudCatalogMode()) return;
+  saveAbout(about);
 }

@@ -3,6 +3,8 @@ import {
   AdminBrand,
   BrandCategory,
   HeroBanner,
+  FooterBranding,
+  AboutSection,
   LegacySeedProduct,
   MediaItem,
   Product,
@@ -11,6 +13,7 @@ import {
 import { products as seedProducts, categories as legacyShopCategories } from "@/lib/products";
 import { brands as seedBrands } from "@/lib/brands";
 import { HERO_POSTER } from "@/lib/media";
+import { BRAND_LOGO_SRC } from "@/lib/brand-assets";
 import { slugify } from "@/lib/utils";
 import { sortBrandsAlphabetically } from "@/lib/brand-categories";
 import { deriveListingFields, normalizeVariant } from "@/lib/variants";
@@ -35,6 +38,8 @@ export const STORAGE_KEYS = {
   categories: "nelly-admin-categories",
   media: "nelly-admin-media",
   banner: "nelly-admin-banner",
+  footer: "nelly-admin-footer",
+  about: "nelly-admin-about",
   catalogVersion: "nelly-catalog-version",
 } as const;
 
@@ -584,6 +589,67 @@ export function loadBanner(): HeroBanner {
   };
 }
 
+export function getDefaultFooter(): FooterBranding {
+  return {
+    logoUrl: BRAND_LOGO_SRC,
+    legalName: "NELLY GROUP CO., LTD.",
+    description:
+      "Premium pet lifestyle, curated with care. NELLY GROUP brings together the world's finest brands for companions who deserve the extraordinary.",
+  };
+}
+
+export function loadFooter(): FooterBranding {
+  const stored = read<FooterBranding>(STORAGE_KEYS.footer);
+  const defaults = getDefaultFooter();
+  const footer = stored ?? defaults;
+  return {
+    ...defaults,
+    ...footer,
+    logoUrl: sanitizeImageUrl(footer.logoUrl, defaults.logoUrl),
+    legalName: footer.legalName?.trim() || defaults.legalName,
+    description: footer.description?.trim() || defaults.description,
+  };
+}
+
+export function saveFooter(footer: FooterBranding): void {
+  write(STORAGE_KEYS.footer, footer);
+}
+
+export function getDefaultAbout(): AboutSection {
+  return {
+    imageUrl: BRAND_LOGO_SRC,
+    eyebrow: "About Us",
+    title: "About NELLY GROUP",
+    body: [
+      "NELLY GROUP is Thailand's destination for premium pet lifestyle — curating the world's most distinguished brands under one refined roof.",
+      "From Japanese-engineered strollers to artisan leather collars, every product is selected for quality, design, and the joy it brings to your companion. We believe luxury is intentional — not excessive.",
+      "Visit our flagship stores or explore online. Either way, welcome to a new standard of pet living.",
+    ].join("\n\n"),
+    ctaLabel: "Explore the Collection",
+    ctaHref: "/shop",
+  };
+}
+
+export function loadAbout(): AboutSection {
+  const stored = read<AboutSection>(STORAGE_KEYS.about);
+  const defaults = getDefaultAbout();
+  const about = stored ?? defaults;
+  return {
+    ...defaults,
+    ...about,
+    imageUrl: sanitizeImageUrl(about.imageUrl, defaults.imageUrl),
+    eyebrow: about.eyebrow?.trim() || defaults.eyebrow,
+    title: about.title?.trim() || defaults.title,
+    body: about.body?.trim() || defaults.body,
+    ctaLabel: about.ctaLabel?.trim() || defaults.ctaLabel,
+    ctaHref: about.ctaHref?.trim() || defaults.ctaHref,
+  };
+}
+
+export function saveAbout(about: AboutSection): void {
+  write(STORAGE_KEYS.about, about);
+}
+
 export function saveBanner(banner: HeroBanner): void {
   write(STORAGE_KEYS.banner, banner);
 }
@@ -623,6 +689,8 @@ export function resetAdminStorageToDefaults(): {
   categories: BrandCategory[];
   media: MediaItem[];
   banner: HeroBanner;
+  footer: FooterBranding;
+  about: AboutSection;
 } {
   clearAdminStorage();
   const brands = getDefaultBrands();
@@ -630,13 +698,17 @@ export function resetAdminStorageToDefaults(): {
   const products = repairProductsTaxonomy(getDefaultProducts(), brands);
   const media: MediaItem[] = [];
   const banner = getDefaultBanner();
+  const footer = getDefaultFooter();
+  const about = getDefaultAbout();
   write(STORAGE_KEYS.catalogVersion, CATALOG_VERSION);
   saveProducts(products);
   saveBrands(brands);
   saveCategories(categories);
   saveMedia(media);
   saveBanner(banner);
-  return { products, brands, categories, media, banner };
+  saveFooter(footer);
+  saveAbout(about);
+  return { products, brands, categories, media, banner, footer, about };
 }
 
 export function initializeCatalogFromStorage(): {
@@ -645,12 +717,16 @@ export function initializeCatalogFromStorage(): {
   categories: BrandCategory[];
   media: MediaItem[];
   banner: HeroBanner;
+  footer: FooterBranding;
+  about: AboutSection;
   migrated: boolean;
 } {
   let media = loadMedia();
   let brands = loadBrands();
   let categories = loadCategories();
   const banner = loadBanner();
+  const footer = loadFooter();
+  const about = loadAbout();
   const version = read<number>(STORAGE_KEYS.catalogVersion);
   const stored = read<unknown[]>(STORAGE_KEYS.products);
   const defaults = getDefaultProducts();
@@ -719,5 +795,5 @@ export function initializeCatalogFromStorage(): {
     }
   }
 
-  return { products: enriched, brands, categories, media, banner, migrated };
+  return { products: enriched, brands, categories, media, banner, footer, about, migrated };
 }

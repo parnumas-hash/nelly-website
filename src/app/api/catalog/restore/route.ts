@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { parseCatalogBackup } from "@/lib/admin/backup";
+import { getDefaultFooter, getDefaultAbout } from "@/lib/admin/storage";
 import { saveCatalogToDb } from "@/lib/supabase/catalog-store";
 import { isSupabaseConfigured } from "@/lib/supabase/admin";
 import { enrichProductWithMedia } from "@/lib/media-library";
@@ -29,6 +30,8 @@ export async function POST(request: Request) {
       categories: backup.categories,
       media: backup.media,
       banner: backup.banner,
+      footer: backup.footer ?? getDefaultFooter(),
+      about: backup.about ?? getDefaultAbout(),
     });
 
     const products = saved.products.map((product) =>
@@ -46,6 +49,8 @@ export async function POST(request: Request) {
       categories: saved.categories,
       media: saved.media,
       banner: saved.banner,
+      footer: saved.footer,
+      about: saved.about,
     });
   } catch (error) {
     const message =

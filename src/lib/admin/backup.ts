@@ -2,15 +2,21 @@ import {
   AdminBrand,
   AdminProduct,
   BrandCategory,
+  AboutSection,
+  FooterBranding,
   HeroBanner,
   MediaItem,
 } from "@/types";
 import {
   CATALOG_VERSION,
+  getDefaultAbout,
+  getDefaultFooter,
   normalizeAdminProduct,
+  saveAbout,
   saveBanner,
   saveBrands,
   saveCategories,
+  saveFooter,
   saveMedia,
   saveProducts,
   saveCatalogVersion,
@@ -34,6 +40,8 @@ export interface CatalogBackup {
   categories: BrandCategory[];
   media: MediaItem[];
   banner: HeroBanner;
+  footer?: FooterBranding;
+  about?: AboutSection;
 }
 
 export interface CatalogBackupSummary {
@@ -50,6 +58,8 @@ export function createCatalogBackup(snapshot: {
   categories: BrandCategory[];
   media: MediaItem[];
   banner: HeroBanner;
+  footer: FooterBranding;
+  about: AboutSection;
 }): CatalogBackup {
   return {
     formatVersion: BACKUP_FORMAT_VERSION,
@@ -61,6 +71,8 @@ export function createCatalogBackup(snapshot: {
     categories: normalizeBrandCategories(snapshot.categories),
     media: snapshot.media,
     banner: snapshot.banner,
+    footer: snapshot.footer,
+    about: snapshot.about,
   };
 }
 
@@ -178,6 +190,8 @@ export function validateCatalogBackup(raw: unknown): CatalogBackup {
     categories: normalizeBrandCategories(data.categories),
     media: data.media,
     banner: data.banner as HeroBanner,
+    footer: (data.footer as FooterBranding | undefined) ?? getDefaultFooter(),
+    about: (data.about as AboutSection | undefined) ?? getDefaultAbout(),
   };
 }
 
@@ -187,6 +201,8 @@ export function applyCatalogBackup(backup: CatalogBackup): {
   categories: BrandCategory[];
   media: MediaItem[];
   banner: HeroBanner;
+  footer: FooterBranding;
+  about: AboutSection;
 } {
   const products = backup.products.map((product) =>
     enrichProductWithMedia(
@@ -201,6 +217,8 @@ export function applyCatalogBackup(backup: CatalogBackup): {
   saveCategories(backup.categories);
   saveMedia(backup.media);
   saveBanner(backup.banner);
+  saveFooter(backup.footer ?? getDefaultFooter());
+  saveAbout(backup.about ?? getDefaultAbout());
   saveCatalogVersion(backup.catalogVersion);
 
   return {
@@ -209,5 +227,7 @@ export function applyCatalogBackup(backup: CatalogBackup): {
     categories: backup.categories,
     media: backup.media,
     banner: backup.banner,
+    footer: backup.footer ?? getDefaultFooter(),
+    about: backup.about ?? getDefaultAbout(),
   };
 }

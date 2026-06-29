@@ -127,6 +127,21 @@ export interface HeroBanner {
   active: boolean;
 }
 
+export interface FooterBranding {
+  logoUrl: string;
+  legalName: string;
+  description: string;
+}
+
+export interface AboutSection {
+  imageUrl: string;
+  eyebrow: string;
+  title: string;
+  body: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
 export interface Testimonial {
   id: string;
   name: string;

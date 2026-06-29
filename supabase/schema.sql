@@ -9,6 +9,8 @@ create table if not exists public.catalog_store (
   categories jsonb not null default '[]'::jsonb,
   media jsonb not null default '[]'::jsonb,
   banner jsonb not null default '{}'::jsonb,
+  footer jsonb not null default '{}'::jsonb,
+  about jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
 

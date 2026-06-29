@@ -30,7 +30,7 @@ const ICONS = {
   "/admin/brands": Tags,
   "/admin/categories": FolderTree,
   "/admin/media": ImageIcon,
-  "/admin/banners": Monitor,
+  "/admin/site-content": Monitor,
   "/admin/settings": Settings,
   "/admin/users": Users,
 } as const;

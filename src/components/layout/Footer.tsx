@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Instagram, Facebook, Mail } from "lucide-react";
-import Logo from "@/components/ui/Logo";
 import { useCatalog } from "@/context/CatalogContext";
+import { BRAND_LOGO_HEIGHT, BRAND_LOGO_WIDTH } from "@/lib/brand-assets";
+import { shouldUnoptimize } from "@/lib/image-utils";
 
 const footerLinks = {
   shop: [
@@ -29,7 +31,7 @@ const footerLinks = {
 };
 
 export default function Footer() {
-  const { brands } = useCatalog();
+  const { brands, footer } = useCatalog();
   const brandLinks = brands
     .filter((brand) => brand.active)
     .map((brand) => ({
@@ -37,35 +39,52 @@ export default function Footer() {
       href: `/brands/${brand.slug}`,
     }));
 
+  const logoSrc = footer.logoUrl;
+
   return (
     <footer className="border-t border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20">
         <div className="grid gap-12 lg:grid-cols-6">
           <div className="lg:col-span-2">
-            <Logo size="xl" />
-            <p className="mt-1 text-[10px] uppercase tracking-[0.15em] text-neutral-400">
-              NELLY GROUP CO., LTD.
-            </p>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-neutral-500">
-              Premium pet lifestyle, curated with care. NELLY GROUP brings
-              together the world&apos;s finest brands for companions who deserve
-              the extraordinary.
-            </p>
-            <div className="mt-6 flex gap-4">
-              {[
-                { icon: Instagram, label: "Instagram", href: "#" },
-                { icon: Facebook, label: "Facebook", href: "#" },
-                { icon: Mail, label: "Email", href: "#" },
-              ].map(({ icon: Icon, label, href }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition-all hover:border-primary hover:text-primary dark:border-neutral-800"
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
+            <div className="mx-auto flex max-w-[300px] flex-col items-center text-center lg:mx-0 lg:items-start lg:text-left">
+              <Link
+                href="/"
+                className="flex h-40 w-full items-center justify-center md:h-44"
+                aria-label="NELLY GROUP home"
+              >
+                {logoSrc ? (
+                  <Image
+                    src={logoSrc}
+                    alt={footer.legalName}
+                    width={BRAND_LOGO_WIDTH}
+                    height={BRAND_LOGO_HEIGHT}
+                    className="max-h-full max-w-full object-contain"
+                    unoptimized={shouldUnoptimize(logoSrc)}
+                  />
+                ) : null}
+              </Link>
+              <p className="mt-2 w-full text-[10px] uppercase tracking-[0.15em] text-neutral-400">
+                {footer.legalName}
+              </p>
+              <p className="mt-4 max-w-sm text-sm leading-relaxed text-neutral-500">
+                {footer.description}
+              </p>
+              <div className="mt-6 flex gap-4">
+                {[
+                  { icon: Instagram, label: "Instagram", href: "#" },
+                  { icon: Facebook, label: "Facebook", href: "#" },
+                  { icon: Mail, label: "Email", href: "#" },
+                ].map(({ icon: Icon, label, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    aria-label={label}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition-all hover:border-primary hover:text-primary dark:border-neutral-800"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
 
