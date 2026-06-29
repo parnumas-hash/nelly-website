@@ -7,16 +7,20 @@ import { useCatalog } from "@/context/CatalogContext";
 import { cn } from "@/lib/utils";
 import { shouldUnoptimize } from "@/lib/image-utils";
 
+import { MAX_VARIANT_IMAGES } from "@/lib/variant-matrix";
+
 interface SortableImageUploadProps {
   imageIds: string[];
   onChange: (imageIds: string[]) => void;
   label?: string;
+  maxImages?: number;
 }
 
 export default function SortableImageUpload({
   imageIds,
   onChange,
   label = "Variant Images",
+  maxImages = MAX_VARIANT_IMAGES,
 }: SortableImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { addMedia, getMediaUrl, storageError } = useCatalog();
@@ -28,8 +32,14 @@ export default function SortableImageUpload({
     if (!files) return;
     setUploadError(null);
     const nextIds = [...imageIds];
+    const remaining = maxImages - nextIds.length;
 
-    for (const file of Array.from(files)) {
+    if (remaining <= 0) {
+      setUploadError(`Maximum ${maxImages} images per variant.`);
+      return;
+    }
+
+    for (const file of Array.from(files).slice(0, remaining)) {
       if (!file.type.startsWith("image/")) continue;
       try {
         const item = await addMedia(file);
@@ -73,7 +83,9 @@ export default function SortableImageUpload({
       >
         <Upload className="mb-2 h-6 w-6 text-neutral-400" />
         <p className="text-xs text-neutral-500">Click to upload · drag to reorder</p>
-        <p className="mt-1 text-[10px] text-neutral-400">Max 5 MB · compressed to 800px</p>
+        <p className="mt-1 text-[10px] text-neutral-400">
+          Up to {maxImages} images · max 5 MB · compressed to 800px
+        </p>
       </div>
 
       <input

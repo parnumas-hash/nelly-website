@@ -9,9 +9,9 @@ import { useCatalog } from "@/context/CatalogContext";
 import { AdminProduct } from "@/types";
 import {
   buildMatrixRows,
-  inferColorImages,
   inferMatrixOptions,
   matrixRowsToFormData,
+  MAX_VARIANT_IMAGES,
   parseOptionInput,
   suggestSku,
   VariantMatrixOptions,
@@ -107,12 +107,10 @@ function OptionValueTags({
   );
 }
 
-function ColorImageCell({
-  color,
+function VariantRowImages({
   imageIds,
   onChange,
 }: {
-  color: string;
   imageIds: string[];
   onChange: (ids: string[]) => void;
 }) {
@@ -124,8 +122,14 @@ function ColorImageCell({
     if (!files) return;
     setError(null);
     const next = [...imageIds];
+    const remaining = MAX_VARIANT_IMAGES - next.length;
 
-    for (const file of Array.from(files)) {
+    if (remaining <= 0) {
+      setError(`Maximum ${MAX_VARIANT_IMAGES} images per SKU.`);
+      return;
+    }
+
+    for (const file of Array.from(files).slice(0, remaining)) {
       if (!file.type.startsWith("image/")) continue;
       try {
         const item = await addMedia(file);
@@ -140,48 +144,62 @@ function ColorImageCell({
     if (inputRef.current) inputRef.current.value = "";
   };
 
-  const thumb = imageIds[0] ? getMediaUrl(imageIds[0]) : null;
+  const canAdd = imageIds.length < MAX_VARIANT_IMAGES;
 
   return (
-    <div className="space-y-2">
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        className="relative mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-dashed border-neutral-300 bg-neutral-50 hover:border-primary dark:border-neutral-700 dark:bg-neutral-950"
-      >
-        {thumb ? (
-          <Image
-            src={thumb}
-            alt={color}
-            fill
-            className="object-cover"
-            unoptimized={shouldUnoptimize(thumb)}
-          />
-        ) : (
-          <Upload className="h-4 w-4 text-neutral-400" />
+    <div className="min-w-[11rem] space-y-1">
+      <div className="flex flex-wrap gap-1.5">
+        {imageIds.map((id, index) => {
+          const url = getMediaUrl(id);
+          return (
+            <div
+              key={id}
+              className="group relative h-12 w-12 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-950"
+            >
+              <Image
+                src={url}
+                alt={`SKU image ${index + 1}`}
+                fill
+                className="object-cover"
+                unoptimized={shouldUnoptimize(url)}
+              />
+              <button
+                type="button"
+                onClick={() => onChange(imageIds.filter((item) => item !== id))}
+                className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                aria-label="Remove image"
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+              {index === 0 && (
+                <span className="absolute bottom-0 left-0 right-0 bg-black/50 py-px text-center text-[8px] text-white">
+                  1st
+                </span>
+              )}
+            </div>
+          );
+        })}
+        {canAdd && (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50 hover:border-primary dark:border-neutral-700 dark:bg-neutral-950"
+            aria-label="Add SKU images"
+          >
+            <Upload className="h-4 w-4 text-neutral-400" />
+          </button>
         )}
-      </button>
-      {imageIds.length > 1 && (
-        <p className="text-center text-[10px] text-neutral-400">
-          +{imageIds.length - 1} more
-        </p>
-      )}
-      {thumb && (
-        <button
-          type="button"
-          onClick={() => onChange([])}
-          className="mx-auto block text-[10px] text-red-500 hover:underline"
-        >
-          Remove
-        </button>
-      )}
+      </div>
+      <p className="text-[10px] text-neutral-400">
+        {imageIds.length}/{MAX_VARIANT_IMAGES} images
+      </p>
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
         multiple
         className="hidden"
-        onChange={(e) => handleFiles(e.target.files)}
+        onChange={(e) => void handleFiles(e.target.files)}
       />
       {(error || storageError) && (
         <p className="text-[10px] text-red-500">{error ?? storageError}</p>
@@ -209,9 +227,6 @@ export default function VariantMatrixEditor({
   const [rows, setRows] = useState<VariantMatrixRow[]>(() =>
     buildMatrixRows(initialOptions, variants)
   );
-  const [colorImages, setColorImages] = useState<Record<string, string[]>>(() =>
-    inferColorImages(variants)
-  );
   const [bulk, setBulk] = useState<BulkValues>({
     price: "",
     salePrice: "",
@@ -237,7 +252,6 @@ export default function VariantMatrixEditor({
   useEffect(() => {
     setOptions(initialOptions);
     setRows(buildMatrixRows(initialOptions, variants));
-    setColorImages(inferColorImages(variants));
   }, [liveProduct.updatedAt, initialOptions, variants]);
 
   const updateOptions = (patch: Partial<VariantMatrixOptions>) => {
@@ -270,16 +284,6 @@ export default function VariantMatrixEditor({
     setSaved(false);
   };
 
-  const groupedByColor = useMemo(() => {
-    const groups = new Map<string, VariantMatrixRow[]>();
-    for (const row of rows) {
-      const list = groups.get(row.color) ?? [];
-      list.push(row);
-      groups.set(row.color, list);
-    }
-    return [...groups.entries()];
-  }, [rows]);
-
   const handleSave = () => {
     setSaveError("");
 
@@ -303,7 +307,7 @@ export default function VariantMatrixEditor({
       return;
     }
 
-    const payload = matrixRowsToFormData(rows, colorImages).map((data, index) => ({
+    const payload = matrixRowsToFormData(rows).map((data, index) => ({
       ...data,
       existingId: rows[index].existingId,
     }));
@@ -342,7 +346,7 @@ export default function VariantMatrixEditor({
       <div className="grid gap-4 lg:grid-cols-2">
         <OptionValueTags
           label="Option 1 · Color"
-          description="Upload an image per color in the table below."
+          description="Each SKU row can have up to 5 images in the table below."
           values={options.colors}
           onChange={(colors) => updateOptions({ colors })}
           placeholder="e.g. BLACK, BROWN"
@@ -442,6 +446,7 @@ export default function VariantMatrixEditor({
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-neutral-200 bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950">
+                  <th className="px-4 py-3">Images</th>
                   <th className="px-4 py-3">Color</th>
                   <th className="px-4 py-3">Size</th>
                   {options.useScent && <th className="px-4 py-3">Scent</th>}
@@ -452,84 +457,71 @@ export default function VariantMatrixEditor({
                 </tr>
               </thead>
               <tbody>
-                {groupedByColor.map(([color, colorRows]) =>
-                  colorRows.map((row, index) => (
-                    <tr
-                      key={row.key}
-                      className="border-b border-neutral-100 dark:border-neutral-800"
-                    >
-                      {index === 0 && (
-                        <td
-                          rowSpan={colorRows.length}
-                          className="border-r border-neutral-100 px-4 py-3 align-top dark:border-neutral-800"
-                        >
-                          <p className="mb-2 text-center text-xs font-medium uppercase tracking-wide">
-                            {color}
-                          </p>
-                          <ColorImageCell
-                            color={color}
-                            imageIds={colorImages[color] ?? []}
-                            onChange={(ids) =>
-                              setColorImages((prev) => ({
-                                ...prev,
-                                [color]: ids,
-                              }))
-                            }
-                          />
-                        </td>
-                      )}
-                      <td className="px-4 py-3 font-medium">{row.size}</td>
-                      {options.useScent && (
-                        <td className="px-4 py-3">{row.scent || "—"}</td>
-                      )}
-                      <td className="px-4 py-3">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={row.price || ""}
-                          onChange={(e) =>
-                            updateRow(row.key, {
-                              price: parseFloat(e.target.value) || 0,
-                            })
-                          }
-                          className="w-24 rounded-lg border border-neutral-200 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-950"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="number"
-                          min="0"
-                          value={row.stock || ""}
-                          onChange={(e) =>
-                            updateRow(row.key, {
-                              stock: parseInt(e.target.value, 10) || 0,
-                            })
-                          }
-                          className="w-20 rounded-lg border border-neutral-200 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-950"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          value={row.sku}
-                          onChange={(e) =>
-                            updateRow(row.key, { sku: e.target.value })
-                          }
-                          className="min-w-[8rem] rounded-lg border border-neutral-200 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-950"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          value={row.barcode}
-                          onChange={(e) =>
-                            updateRow(row.key, { barcode: e.target.value })
-                          }
-                          className="min-w-[7rem] rounded-lg border border-neutral-200 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-950"
-                        />
-                      </td>
-                    </tr>
-                  ))
-                )}
+                {rows.map((row) => (
+                  <tr
+                    key={row.key}
+                    className="border-b border-neutral-100 dark:border-neutral-800"
+                  >
+                    <td className="px-4 py-3 align-top">
+                      <VariantRowImages
+                        imageIds={row.imageIds}
+                        onChange={(imageIds) =>
+                          updateRow(row.key, { imageIds })
+                        }
+                      />
+                    </td>
+                    <td className="px-4 py-3 font-medium">{row.color}</td>
+                    <td className="px-4 py-3 font-medium">{row.size}</td>
+                    {options.useScent && (
+                      <td className="px-4 py-3">{row.scent || "—"}</td>
+                    )}
+                    <td className="px-4 py-3">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={row.price || ""}
+                        onChange={(e) =>
+                          updateRow(row.key, {
+                            price: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        className="w-24 rounded-lg border border-neutral-200 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-950"
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <input
+                        type="number"
+                        min="0"
+                        value={row.stock || ""}
+                        onChange={(e) =>
+                          updateRow(row.key, {
+                            stock: parseInt(e.target.value, 10) || 0,
+                          })
+                        }
+                        className="w-20 rounded-lg border border-neutral-200 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-950"
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <input
+                        value={row.sku}
+                        onChange={(e) =>
+                          updateRow(row.key, { sku: e.target.value })
+                        }
+                        className="min-w-[8rem] rounded-lg border border-neutral-200 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-950"
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <input
+                        value={row.barcode}
+                        onChange={(e) =>
+                          updateRow(row.key, { barcode: e.target.value })
+                        }
+                        className="min-w-[7rem] rounded-lg border border-neutral-200 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-950"
+                      />
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

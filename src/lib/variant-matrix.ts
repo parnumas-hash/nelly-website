@@ -1,5 +1,7 @@
 import { ProductVariant, VariantFormData, VariantStatus } from "@/types";
 
+export const MAX_VARIANT_IMAGES = 5;
+
 export interface VariantMatrixRow {
   key: string;
   color: string;
@@ -11,6 +13,7 @@ export interface VariantMatrixRow {
   stock: number;
   sku: string;
   barcode: string;
+  imageIds: string[];
   status: VariantStatus;
 }
 
@@ -52,20 +55,6 @@ export function inferMatrixOptions(
     scents,
     useScent: scents.length > 0,
   };
-}
-
-export function inferColorImages(
-  variants: ProductVariant[]
-): Record<string, string[]> {
-  const map: Record<string, string[]> = {};
-  for (const variant of variants) {
-    const color = variant.color.trim();
-    if (!color || map[color]?.length) continue;
-    if (variant.imageIds?.length) {
-      map[color] = [...variant.imageIds];
-    }
-  }
-  return map;
 }
 
 export function generateMatrixCombinations(
@@ -121,6 +110,7 @@ export function buildMatrixRows(
       stock: match?.stock ?? defaults?.stock ?? 0,
       sku: match?.sku ?? defaults?.sku ?? "",
       barcode: match?.barcode ?? defaults?.barcode ?? "",
+      imageIds: match?.imageIds ? [...match.imageIds] : [],
       status: match?.status ?? defaults?.status ?? "available",
     };
   });
@@ -139,8 +129,7 @@ export function suggestSku(
 }
 
 export function matrixRowsToFormData(
-  rows: VariantMatrixRow[],
-  colorImages: Record<string, string[]>
+  rows: VariantMatrixRow[]
 ): VariantFormData[] {
   return rows.map((row) => ({
     color: row.color,
@@ -151,7 +140,7 @@ export function matrixRowsToFormData(
     price: row.price,
     salePrice: row.salePrice,
     stock: row.stock,
-    imageIds: colorImages[row.color] ?? [],
+    imageIds: row.imageIds.slice(0, MAX_VARIANT_IMAGES),
     status: row.status,
   }));
 }

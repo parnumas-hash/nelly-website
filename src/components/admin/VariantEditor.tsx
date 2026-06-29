@@ -14,6 +14,7 @@ import {
   getVariantDisplayPrice,
   variantToFormData,
 } from "@/lib/variants";
+import { MAX_VARIANT_IMAGES } from "@/lib/variant-matrix";
 import { formatPrice } from "@/lib/utils";
 
 interface VariantEditorProps {
@@ -143,6 +144,7 @@ export default function VariantEditor({
       <SortableImageUpload
         imageIds={form.imageIds}
         onChange={(imageIds) => update("imageIds", imageIds)}
+        label={`Variant Images (max ${MAX_VARIANT_IMAGES})`}
       />
 
       {form.price > 0 && (
