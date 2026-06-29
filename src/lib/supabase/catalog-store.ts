@@ -5,6 +5,8 @@ import {
   AboutSection,
   FooterBranding,
   HeroBanner,
+  HomeCollectionKey,
+  HomeCollections,
   MediaItem,
 } from "@/types";
 import {
@@ -13,6 +15,7 @@ import {
   getDefaultBrands,
   getDefaultFooter,
   getDefaultAbout,
+  getDefaultHomeCollections,
   getDefaultProducts,
 } from "@/lib/admin/storage";
 import { stripProductsForStorage } from "@/lib/media-library";
@@ -29,6 +32,7 @@ export interface CatalogSnapshot {
   banner: HeroBanner;
   footer: FooterBranding;
   about: AboutSection;
+  homeCollections: HomeCollections;
 }
 
 interface CatalogRow {
@@ -40,6 +44,7 @@ interface CatalogRow {
   banner: HeroBanner;
   footer?: FooterBranding;
   about?: AboutSection;
+  home_collections?: HomeCollections;
 }
 
 function defaultSnapshot(): CatalogSnapshot {
@@ -52,6 +57,7 @@ function defaultSnapshot(): CatalogSnapshot {
     banner: getDefaultBanner(),
     footer: getDefaultFooter(),
     about: getDefaultAbout(),
+    homeCollections: getDefaultHomeCollections(),
   };
 }
 
@@ -144,7 +150,29 @@ export async function loadCatalogFromDb(): Promise<CatalogSnapshot | null> {
     banner: (row.banner as HeroBanner) ?? getDefaultBanner(),
     footer: (row.footer as FooterBranding) ?? getDefaultFooter(),
     about: (row.about as AboutSection) ?? getDefaultAbout(),
+    homeCollections:
+      (row.home_collections as HomeCollections) ?? getDefaultHomeCollections(),
   };
+}
+
+async function uploadHomeCollections(
+  homeCollections: HomeCollections
+): Promise<HomeCollections> {
+  const keys: HomeCollectionKey[] = ["travel", "home", "eco"];
+  let next = { ...homeCollections };
+
+  for (const key of keys) {
+    const block = next[key];
+    if (block.imageUrl?.startsWith("data:")) {
+      const url = await ensurePublicUrl(
+        block.imageUrl,
+        `collections/${key}.jpg`
+      );
+      next = { ...next, [key]: { ...block, imageUrl: url } };
+    }
+  }
+
+  return next;
 }
 
 async function uploadAboutImage(about: AboutSection): Promise<AboutSection> {
@@ -184,6 +212,7 @@ export async function saveCatalogToDb(
   const banner = await uploadBannerPoster(snapshot.banner);
   const footer = await uploadFooterLogo(snapshot.footer);
   const about = await uploadAboutImage(snapshot.about);
+  const homeCollections = await uploadHomeCollections(snapshot.homeCollections);
 
   const products = stripProductsForStorage(snapshot.products);
 
@@ -198,6 +227,7 @@ export async function saveCatalogToDb(
     banner,
     footer,
     about,
+    home_collections: homeCollections,
     updated_at: new Date().toISOString(),
   });
 
@@ -214,6 +244,7 @@ export async function saveCatalogToDb(
     banner,
     footer,
     about,
+    homeCollections,
   };
 }
 

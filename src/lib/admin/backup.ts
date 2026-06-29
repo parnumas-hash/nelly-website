@@ -5,18 +5,21 @@ import {
   AboutSection,
   FooterBranding,
   HeroBanner,
+  HomeCollections,
   MediaItem,
 } from "@/types";
 import {
   CATALOG_VERSION,
   getDefaultAbout,
   getDefaultFooter,
+  getDefaultHomeCollections,
   normalizeAdminProduct,
   saveAbout,
   saveBanner,
   saveBrands,
   saveCategories,
   saveFooter,
+  saveHomeCollections,
   saveMedia,
   saveProducts,
   saveCatalogVersion,
@@ -42,6 +45,7 @@ export interface CatalogBackup {
   banner: HeroBanner;
   footer?: FooterBranding;
   about?: AboutSection;
+  homeCollections?: HomeCollections;
 }
 
 export interface CatalogBackupSummary {
@@ -60,6 +64,7 @@ export function createCatalogBackup(snapshot: {
   banner: HeroBanner;
   footer: FooterBranding;
   about: AboutSection;
+  homeCollections: HomeCollections;
 }): CatalogBackup {
   return {
     formatVersion: BACKUP_FORMAT_VERSION,
@@ -73,6 +78,7 @@ export function createCatalogBackup(snapshot: {
     banner: snapshot.banner,
     footer: snapshot.footer,
     about: snapshot.about,
+    homeCollections: snapshot.homeCollections,
   };
 }
 
@@ -192,6 +198,9 @@ export function validateCatalogBackup(raw: unknown): CatalogBackup {
     banner: data.banner as HeroBanner,
     footer: (data.footer as FooterBranding | undefined) ?? getDefaultFooter(),
     about: (data.about as AboutSection | undefined) ?? getDefaultAbout(),
+    homeCollections:
+      (data.homeCollections as HomeCollections | undefined) ??
+      getDefaultHomeCollections(),
   };
 }
 
@@ -203,6 +212,7 @@ export function applyCatalogBackup(backup: CatalogBackup): {
   banner: HeroBanner;
   footer: FooterBranding;
   about: AboutSection;
+  homeCollections: HomeCollections;
 } {
   const products = backup.products.map((product) =>
     enrichProductWithMedia(
@@ -219,6 +229,7 @@ export function applyCatalogBackup(backup: CatalogBackup): {
   saveBanner(backup.banner);
   saveFooter(backup.footer ?? getDefaultFooter());
   saveAbout(backup.about ?? getDefaultAbout());
+  saveHomeCollections(backup.homeCollections ?? getDefaultHomeCollections());
   saveCatalogVersion(backup.catalogVersion);
 
   return {
@@ -229,5 +240,6 @@ export function applyCatalogBackup(backup: CatalogBackup): {
     banner: backup.banner,
     footer: backup.footer ?? getDefaultFooter(),
     about: backup.about ?? getDefaultAbout(),
+    homeCollections: backup.homeCollections ?? getDefaultHomeCollections(),
   };
 }

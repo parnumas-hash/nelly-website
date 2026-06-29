@@ -18,6 +18,7 @@ import {
   HeroBanner,
   FooterBranding,
   AboutSection,
+  HomeCollections,
   MediaItem,
   Product,
   ProductFilters,
@@ -34,10 +35,12 @@ import {
   getDefaultBanner,
   getDefaultFooter,
   getDefaultAbout,
+  getDefaultHomeCollections,
   initializeCatalogFromStorage,
   loadBanner,
   loadFooter,
   loadAbout,
+  loadHomeCollections,
   resetAdminStorageToDefaults,
   StorageQuotaError,
   STORAGE_QUOTA_MESSAGE,
@@ -47,6 +50,7 @@ import {
   persistBanner as writeBannerLocal,
   persistFooter as writeFooterLocal,
   persistAbout as writeAboutLocal,
+  persistHomeCollections as writeHomeCollectionsLocal,
   persistBrands as writeBrandsLocal,
   persistCategories as writeCategoriesLocal,
   persistMedia as writeMediaLocal,
@@ -102,6 +106,7 @@ interface CatalogContextType {
   banner: HeroBanner;
   footer: FooterBranding;
   about: AboutSection;
+  homeCollections: HomeCollections;
   addProduct: (data: ProductFormData) => AdminProduct;
   updateProduct: (id: string, data: ProductFormData) => void;
   deleteProduct: (id: string) => void;
@@ -135,6 +140,7 @@ interface CatalogContextType {
   updateBanner: (data: Partial<HeroBanner>) => void;
   updateFooter: (data: Partial<FooterBranding>) => void;
   updateAbout: (data: Partial<AboutSection>) => void;
+  updateHomeCollections: (data: HomeCollections) => void;
   getProductBySlug: (slug: string) => Product | undefined;
   getAdminProduct: (id: string) => AdminProduct | undefined;
   filterProducts: (filters: ProductFilters) => Product[];
@@ -210,6 +216,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [banner, setBanner] = useState<HeroBanner | null>(null);
   const [footer, setFooter] = useState<FooterBranding | null>(null);
   const [about, setAbout] = useState<AboutSection | null>(null);
+  const [homeCollections, setHomeCollections] = useState<HomeCollections | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
   const mediaRef = useRef<MediaItem[]>([]);
   const adminProductsRef = useRef<AdminProduct[]>([]);
@@ -218,6 +225,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const bannerRef = useRef<HeroBanner | null>(null);
   const footerRef = useRef<FooterBranding | null>(null);
   const aboutRef = useRef<AboutSection | null>(null);
+  const homeCollectionsRef = useRef<HomeCollections | null>(null);
 
   useEffect(() => {
     mediaRef.current = media;
@@ -247,6 +255,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     aboutRef.current = about;
   }, [about]);
 
+  useEffect(() => {
+    homeCollectionsRef.current = homeCollections;
+  }, [homeCollections]);
+
   const resolveBannerFallback = useCallback(
     () => (isRemoteCatalogEnabled() ? getDefaultBanner() : loadBanner()),
     []
@@ -259,6 +271,14 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
 
   const resolveAboutFallback = useCallback(
     () => (isRemoteCatalogEnabled() ? getDefaultAbout() : loadAbout()),
+    []
+  );
+
+  const resolveHomeCollectionsFallback = useCallback(
+    () =>
+      isRemoteCatalogEnabled()
+        ? getDefaultHomeCollections()
+        : loadHomeCollections(),
     []
   );
 
@@ -286,9 +306,16 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         banner: bannerRef.current ?? resolveBannerFallback(),
         footer: footerRef.current ?? resolveFooterFallback(),
         about: aboutRef.current ?? resolveAboutFallback(),
+        homeCollections:
+          homeCollectionsRef.current ?? resolveHomeCollectionsFallback(),
       })
     );
-  }, [resolveBannerFallback, resolveFooterFallback, resolveAboutFallback]);
+  }, [
+    resolveBannerFallback,
+    resolveFooterFallback,
+    resolveAboutFallback,
+    resolveHomeCollectionsFallback,
+  ]);
 
   const enrichProducts = useCallback(
     (products: AdminProduct[], mediaItems: MediaItem[]) =>
@@ -314,6 +341,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       setBanner(normalized.banner);
       setFooter(normalized.footer);
       setAbout(normalized.about);
+      setHomeCollections(normalized.homeCollections);
     },
     [enrichProducts]
   );
@@ -361,6 +389,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
           setBanner(snapshot.banner);
           setFooter(snapshot.footer);
           setAbout(snapshot.about);
+          setHomeCollections(snapshot.homeCollections);
           setStorageError(null);
           setReady(true);
           return;
@@ -391,6 +420,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setBanner(catalog.banner);
         setFooter(catalog.footer);
         setAbout(catalog.about);
+        setHomeCollections(catalog.homeCollections);
       } catch (error) {
         if (error instanceof StorageQuotaError) {
           setStorageError(error.message);
@@ -407,6 +437,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setBanner(loadBanner());
         setFooter(loadFooter());
         setAbout(loadAbout());
+        setHomeCollections(loadHomeCollections());
       } finally {
         if (!cancelled) setReady(true);
       }
@@ -893,6 +924,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setBanner(snapshot.banner);
         setFooter(snapshot.footer);
         setAbout(snapshot.about);
+        setHomeCollections(snapshot.homeCollections);
       }
       setStorageError(null);
       syncRemoteCatalog();
@@ -914,6 +946,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       banner: banner ?? resolveBannerFallback(),
       footer: footer ?? resolveFooterFallback(),
       about: about ?? resolveAboutFallback(),
+      homeCollections: homeCollections ?? resolveHomeCollectionsFallback(),
     });
     downloadCatalogBackup(backup);
     setStorageError(null);
@@ -923,9 +956,11 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     banner,
     footer,
     about,
+    homeCollections,
     resolveBannerFallback,
     resolveFooterFallback,
     resolveAboutFallback,
+    resolveHomeCollectionsFallback,
   ]);
 
   const restoreCatalogBackup = useCallback(
@@ -950,6 +985,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setBanner(snapshot.banner);
         setFooter(snapshot.footer);
         setAbout(snapshot.about);
+        setHomeCollections(snapshot.homeCollections);
         setStorageError(null);
         return getCatalogBackupSummary(backup);
       } catch (error) {
@@ -1020,6 +1056,21 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       return next;
     });
   }, [syncRemoteCatalog, resolveAboutFallback]);
+
+  const updateHomeCollections = useCallback((data: HomeCollections) => {
+    setHomeCollections(data);
+    try {
+      writeHomeCollectionsLocal(data);
+      setStorageError(null);
+      syncRemoteCatalog();
+    } catch (error) {
+      if (error instanceof StorageQuotaError) {
+        setStorageError(error.message);
+      } else {
+        setStorageError("Could not save home collections.");
+      }
+    }
+  }, [syncRemoteCatalog]);
 
   const getProductBySlug = useCallback(
     (slug: string) => publishedProducts.find((p) => p.slug === slug),
@@ -1133,6 +1184,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     banner: banner ?? resolveBannerFallback(),
     footer: footer ?? resolveFooterFallback(),
     about: about ?? resolveAboutFallback(),
+    homeCollections: homeCollections ?? resolveHomeCollectionsFallback(),
     addProduct,
     updateProduct,
     deleteProduct,
@@ -1159,6 +1211,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     updateBanner,
     updateFooter,
     updateAbout,
+    updateHomeCollections,
     getProductBySlug,
     getAdminProduct,
     filterProducts,

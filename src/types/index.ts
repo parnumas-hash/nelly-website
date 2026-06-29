@@ -142,6 +142,22 @@ export interface AboutSection {
   ctaHref: string;
 }
 
+export interface HomeCollection {
+  title: string;
+  description: string;
+  imageUrl: string;
+  href: string;
+  imageAlt: string;
+}
+
+export type HomeCollectionKey = keyof HomeCollections;
+
+export interface HomeCollections {
+  travel: HomeCollection;
+  home: HomeCollection;
+  eco: HomeCollection;
+}
+
 export interface Testimonial {
   id: string;
   name: string;

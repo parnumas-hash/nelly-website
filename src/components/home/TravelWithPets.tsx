@@ -1,8 +1,8 @@
 "use client";
 
 import CollectionSection from "@/components/home/CollectionSection";
-import { collections } from "@/lib/collections";
 import { useCatalog } from "@/context/CatalogContext";
+import { getDefaultHomeCollections } from "@/lib/admin/storage";
 
 function useTravelProducts() {
   const { publishedProducts, ready } = useCatalog();
@@ -14,15 +14,17 @@ function useTravelProducts() {
 
 export default function TravelWithPets() {
   const products = useTravelProducts();
-  const { title, description, image, href } = collections.travel;
+  const { homeCollections } = useCatalog();
+  const content = homeCollections ?? getDefaultHomeCollections();
+  const { title, description, imageUrl, href, imageAlt } = content.travel;
 
   return (
     <CollectionSection
       id="travel"
       title={title}
       description={description}
-      image={image}
-      imageAlt="Premium pet travel and strollers"
+      image={imageUrl}
+      imageAlt={imageAlt}
       products={products}
       href={href}
       background="white"

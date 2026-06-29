@@ -1,11 +1,11 @@
 "use client";
 
 import CollectionSection from "@/components/home/CollectionSection";
-import { collections } from "@/lib/collections";
 import { useCatalog } from "@/context/CatalogContext";
+import { getDefaultHomeCollections } from "@/lib/admin/storage";
 
 export default function EcoFriendly() {
-  const { publishedProducts, ready } = useCatalog();
+  const { publishedProducts, ready, homeCollections } = useCatalog();
   const products = ready
     ? publishedProducts
         .filter(
@@ -16,15 +16,16 @@ export default function EcoFriendly() {
         )
         .slice(0, 4)
     : [];
-  const { title, description, image, href } = collections.eco;
+  const content = homeCollections ?? getDefaultHomeCollections();
+  const { title, description, imageUrl, href, imageAlt } = content.eco;
 
   return (
     <CollectionSection
       id="eco"
       title={title}
       description={description}
-      image={image}
-      imageAlt="Eco-friendly pet products"
+      image={imageUrl}
+      imageAlt={imageAlt}
       products={products}
       href={href}
       background="white"

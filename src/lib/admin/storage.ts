@@ -5,6 +5,9 @@ import {
   HeroBanner,
   FooterBranding,
   AboutSection,
+  HomeCollection,
+  HomeCollectionKey,
+  HomeCollections,
   LegacySeedProduct,
   MediaItem,
   Product,
@@ -14,6 +17,7 @@ import { products as seedProducts, categories as legacyShopCategories } from "@/
 import { brands as seedBrands } from "@/lib/brands";
 import { HERO_POSTER } from "@/lib/media";
 import { BRAND_LOGO_SRC } from "@/lib/brand-assets";
+import { images, unsplash } from "@/lib/images";
 import { slugify } from "@/lib/utils";
 import { sortBrandsAlphabetically } from "@/lib/brand-categories";
 import { deriveListingFields, normalizeVariant } from "@/lib/variants";
@@ -40,6 +44,7 @@ export const STORAGE_KEYS = {
   banner: "nelly-admin-banner",
   footer: "nelly-admin-footer",
   about: "nelly-admin-about",
+  homeCollections: "nelly-admin-home-collections",
   catalogVersion: "nelly-catalog-version",
 } as const;
 
@@ -650,6 +655,66 @@ export function saveAbout(about: AboutSection): void {
   write(STORAGE_KEYS.about, about);
 }
 
+function normalizeHomeCollection(
+  stored: Partial<HomeCollection> | undefined,
+  defaults: HomeCollection
+): HomeCollection {
+  const block = stored ?? defaults;
+  return {
+    ...defaults,
+    ...block,
+    title: block.title?.trim() || defaults.title,
+    description: block.description?.trim() || defaults.description,
+    imageUrl: sanitizeImageUrl(block.imageUrl, defaults.imageUrl),
+    href: block.href?.trim() || defaults.href,
+    imageAlt: block.imageAlt?.trim() || defaults.imageAlt,
+  };
+}
+
+export function getDefaultHomeCollections(): HomeCollections {
+  return {
+    travel: {
+      title: "Travel with Pets",
+      description:
+        "Premium strollers, carriers, and travel essentials for adventures near and far.",
+      imageUrl: unsplash("photo-1601758228041-f3b2795255f1", 1200),
+      href: "/shop?category=strollers",
+      imageAlt: "Premium pet travel and strollers",
+    },
+    home: {
+      title: "Home Living",
+      description:
+        "Designer beds and furniture that complement your interior — comfort redefined.",
+      imageUrl: unsplash("photo-1548191265-cc70d3d45c01", 1200),
+      href: "/shop?category=beds",
+      imageAlt: "Premium pet beds and home furniture",
+    },
+    eco: {
+      title: "Eco Friendly",
+      description:
+        "Sustainable, plant-based products for responsible pet parents who care.",
+      imageUrl: images.pets.golden,
+      href: "/shop?category=eco",
+      imageAlt: "Eco-friendly pet products",
+    },
+  };
+}
+
+export function loadHomeCollections(): HomeCollections {
+  const stored = read<HomeCollections>(STORAGE_KEYS.homeCollections);
+  const defaults = getDefaultHomeCollections();
+  const data = stored ?? defaults;
+  return {
+    travel: normalizeHomeCollection(data.travel, defaults.travel),
+    home: normalizeHomeCollection(data.home, defaults.home),
+    eco: normalizeHomeCollection(data.eco, defaults.eco),
+  };
+}
+
+export function saveHomeCollections(homeCollections: HomeCollections): void {
+  write(STORAGE_KEYS.homeCollections, homeCollections);
+}
+
 export function saveBanner(banner: HeroBanner): void {
   write(STORAGE_KEYS.banner, banner);
 }
@@ -691,6 +756,7 @@ export function resetAdminStorageToDefaults(): {
   banner: HeroBanner;
   footer: FooterBranding;
   about: AboutSection;
+  homeCollections: HomeCollections;
 } {
   clearAdminStorage();
   const brands = getDefaultBrands();
@@ -700,6 +766,7 @@ export function resetAdminStorageToDefaults(): {
   const banner = getDefaultBanner();
   const footer = getDefaultFooter();
   const about = getDefaultAbout();
+  const homeCollections = getDefaultHomeCollections();
   write(STORAGE_KEYS.catalogVersion, CATALOG_VERSION);
   saveProducts(products);
   saveBrands(brands);
@@ -708,7 +775,8 @@ export function resetAdminStorageToDefaults(): {
   saveBanner(banner);
   saveFooter(footer);
   saveAbout(about);
-  return { products, brands, categories, media, banner, footer, about };
+  saveHomeCollections(homeCollections);
+  return { products, brands, categories, media, banner, footer, about, homeCollections };
 }
 
 export function initializeCatalogFromStorage(): {
@@ -719,6 +787,7 @@ export function initializeCatalogFromStorage(): {
   banner: HeroBanner;
   footer: FooterBranding;
   about: AboutSection;
+  homeCollections: HomeCollections;
   migrated: boolean;
 } {
   let media = loadMedia();
@@ -727,6 +796,7 @@ export function initializeCatalogFromStorage(): {
   const banner = loadBanner();
   const footer = loadFooter();
   const about = loadAbout();
+  const homeCollections = loadHomeCollections();
   const version = read<number>(STORAGE_KEYS.catalogVersion);
   const stored = read<unknown[]>(STORAGE_KEYS.products);
   const defaults = getDefaultProducts();
@@ -795,5 +865,5 @@ export function initializeCatalogFromStorage(): {
     }
   }
 
-  return { products: enriched, brands, categories, media, banner, footer, about, migrated };
+  return { products: enriched, brands, categories, media, banner, footer, about, homeCollections, migrated };
 }

@@ -5,10 +5,11 @@ import {
   getDefaultBrands,
   getDefaultFooter,
   getDefaultAbout,
+  getDefaultHomeCollections,
   getDefaultProducts,
 } from "@/lib/admin/storage";
 import { normalizeBrandCategories } from "@/lib/brand-categories";
-import { AboutSection, FooterBranding, HeroBanner } from "@/types";
+import { AboutSection, FooterBranding, HeroBanner, HomeCollections } from "@/types";
 
 export function normalizeCatalogSnapshot(
   snapshot: Partial<CatalogSyncSnapshot> | null | undefined
@@ -16,6 +17,7 @@ export function normalizeCatalogSnapshot(
   const fallbackBanner = getDefaultBanner();
   const fallbackFooter = getDefaultFooter();
   const fallbackAbout = getDefaultAbout();
+  const fallbackHomeCollections = getDefaultHomeCollections();
 
   return {
     catalogVersion: snapshot?.catalogVersion ?? CATALOG_VERSION,
@@ -42,5 +44,19 @@ export function normalizeCatalogSnapshot(
       ...fallbackAbout,
       ...(snapshot?.about ?? {}),
     } as AboutSection,
+    homeCollections: {
+      travel: {
+        ...fallbackHomeCollections.travel,
+        ...(snapshot?.homeCollections?.travel ?? {}),
+      },
+      home: {
+        ...fallbackHomeCollections.home,
+        ...(snapshot?.homeCollections?.home ?? {}),
+      },
+      eco: {
+        ...fallbackHomeCollections.eco,
+        ...(snapshot?.homeCollections?.eco ?? {}),
+      },
+    } as HomeCollections,
   };
 }

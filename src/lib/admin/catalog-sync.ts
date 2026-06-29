@@ -4,6 +4,7 @@ import {
   BrandCategory,
   FooterBranding,
   AboutSection,
+  HomeCollections,
   HeroBanner,
   MediaItem,
 } from "@/types";
@@ -17,6 +18,7 @@ export interface CatalogSyncSnapshot {
   banner: HeroBanner;
   footer: FooterBranding;
   about: AboutSection;
+  homeCollections: HomeCollections;
 }
 
 export function isRemoteCatalogEnabled(): boolean {

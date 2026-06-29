@@ -38,6 +38,7 @@ export async function GET() {
       banner: normalized.banner,
       footer: normalized.footer,
       about: normalized.about,
+      homeCollections: normalized.homeCollections,
     });
   } catch (error) {
     const message =
@@ -72,6 +73,7 @@ export async function PUT(request: Request) {
       banner: body.banner ?? defaults.banner,
       footer: body.footer ?? defaults.footer,
       about: body.about ?? defaults.about,
+      homeCollections: body.homeCollections ?? defaults.homeCollections,
     };
 
     const saved = await saveCatalogToDb(snapshot);
@@ -93,6 +95,7 @@ export async function PUT(request: Request) {
       banner: saved.banner,
       footer: saved.footer,
       about: saved.about,
+      homeCollections: saved.homeCollections,
     });
   } catch (error) {
     const message =
