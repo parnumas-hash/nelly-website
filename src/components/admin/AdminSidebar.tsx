@@ -42,9 +42,14 @@ export default function AdminSidebar() {
 
   const Nav = () => (
     <>
-      <div className="mb-8 px-2">
-        <Logo href="/admin" size="md" />
-        <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-neutral-400">
+      <div className="mb-8 flex flex-col items-center px-3 text-center">
+        <Logo
+          href="/admin"
+          size="xl"
+          className="mx-auto w-full justify-center"
+          imageClassName="mx-auto w-full max-w-[210px] object-contain"
+        />
+        <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-neutral-400">
           Admin
         </p>
       </div>
