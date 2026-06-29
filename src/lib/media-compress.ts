@@ -1,8 +1,16 @@
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-const MAX_WIDTH = 800;
-const JPEG_QUALITY = 0.68;
+import { fileToBase64 } from "./brand-image";
 
-export { MAX_UPLOAD_BYTES, MAX_WIDTH, JPEG_QUALITY };
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_WIDTH = 1920;
+const JPEG_QUALITY = 0.92;
+const PRESERVE_ORIGINAL_MAX_BYTES = 1.5 * 1024 * 1024;
+
+export {
+  MAX_UPLOAD_BYTES,
+  MAX_WIDTH,
+  JPEG_QUALITY,
+  PRESERVE_ORIGINAL_MAX_BYTES,
+};
 
 export async function compressImageFile(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) {
@@ -16,7 +24,15 @@ export async function compressImageFile(file: File): Promise<string> {
 
   try {
     const image = await loadImage(objectUrl);
-    const scale = Math.min(1, MAX_WIDTH / image.width);
+    const largestSide = Math.max(image.width, image.height);
+    const needsResize = largestSide > MAX_WIDTH;
+    const needsCompress = file.size > PRESERVE_ORIGINAL_MAX_BYTES;
+
+    if (!needsResize && !needsCompress) {
+      return fileToBase64(file);
+    }
+
+    const scale = Math.min(1, MAX_WIDTH / largestSide);
     const width = Math.max(1, Math.round(image.width * scale));
     const height = Math.max(1, Math.round(image.height * scale));
 

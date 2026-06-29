@@ -4,7 +4,6 @@ import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Heart, Minus, Plus, Star, Truck, Shield, RotateCcw } from "lucide-react";
-import { motion } from "framer-motion";
 import PageTransition from "@/components/ui/PageTransition";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
@@ -13,6 +12,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCatalog } from "@/context/CatalogContext";
 import SafeImage from "@/components/ui/SafeImage";
+import ProductImageZoom from "@/components/product/ProductImageZoom";
 import {
   getProductDisplayImages,
   getVariantDisplayImages,
@@ -234,33 +234,18 @@ export default function ProductDetail({ slug, initialProduct }: ProductDetailPro
 
         <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
           <div className="space-y-4">
-            <motion.div
+            <ProductImageZoom
               key={`${activeColor}-${activeSize}-${activeScent}-${selectedImage}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="relative aspect-square overflow-hidden rounded-3xl bg-[#faf8f5] p-6 ring-1 ring-neutral-100 md:p-8 dark:bg-neutral-950 dark:ring-neutral-800"
+              src={displayImages[selectedImage] ?? ""}
+              alt={product.name}
+              imageKey={`${activeColor}-${activeSize}-${activeScent}-${selectedImage}-${displayImages[selectedImage] ?? ""}`}
+              priority
             >
-              {displayImages[selectedImage] ? (
-                <div className="relative h-full w-full">
-                  <SafeImage
-                    src={displayImages[selectedImage]}
-                    alt={product.name}
-                    fill
-                    priority
-                    className="object-contain object-center"
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                  />
-                </div>
-              ) : (
-                <div className="flex h-full items-center justify-center text-neutral-400">
-                  No image
-                </div>
-              )}
-              <div className="absolute left-4 top-4 flex gap-2">
+              <div className="pointer-events-none absolute left-4 top-4 flex gap-2">
                 {product.isNew && <Badge variant="new">New</Badge>}
                 {originalPrice && <Badge variant="sale">Sale</Badge>}
               </div>
-            </motion.div>
+            </ProductImageZoom>
 
             {displayImages.length > 1 && (
               <div className="flex gap-3">

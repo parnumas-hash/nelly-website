@@ -196,15 +196,18 @@ export function isLocalImage(src: string): boolean {
   return src.startsWith("/");
 }
 
+export function isCatalogMediaUrl(src: string): boolean {
+  return src.includes("/storage/v1/object/public/catalog-media/");
+}
+
 export function shouldUnoptimize(src: string): boolean {
-  return isDataUrl(src) || isLocalImage(src);
+  if (!src) return false;
+  return isDataUrl(src) || isLocalImage(src) || isCatalogMediaUrl(src);
 }
 
 /** Hero banner — skip Next.js recompression for maximum sharpness. */
 export function shouldUnoptimizeBanner(src: string): boolean {
-  if (!src) return false;
-  if (isDataUrl(src) || isLocalImage(src)) return true;
-  return src.includes("/storage/v1/object/public/catalog-media/");
+  return shouldUnoptimize(src);
 }
 
 export function hasBrandCustomImage(
