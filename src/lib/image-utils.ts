@@ -200,6 +200,13 @@ export function shouldUnoptimize(src: string): boolean {
   return isDataUrl(src) || isLocalImage(src);
 }
 
+/** Hero banner — skip Next.js recompression for maximum sharpness. */
+export function shouldUnoptimizeBanner(src: string): boolean {
+  if (!src) return false;
+  if (isDataUrl(src) || isLocalImage(src)) return true;
+  return src.includes("/storage/v1/object/public/catalog-media/");
+}
+
 export function hasBrandCustomImage(
   brand: Pick<{ image?: string; hasCustomImage?: boolean }, "image" | "hasCustomImage">
 ): boolean {

@@ -135,6 +135,14 @@ export async function loadCatalogFromDb(): Promise<CatalogSnapshot | null> {
   };
 }
 
+async function uploadBannerPoster(banner: HeroBanner): Promise<HeroBanner> {
+  if (banner.posterUrl?.startsWith("data:")) {
+    const url = await ensurePublicUrl(banner.posterUrl, "banner/hero.jpg");
+    return { ...banner, posterUrl: url };
+  }
+  return banner;
+}
+
 export async function saveCatalogToDb(
   snapshot: CatalogSnapshot
 ): Promise<CatalogSnapshot> {
@@ -145,6 +153,7 @@ export async function saveCatalogToDb(
   const media = await uploadMediaLibrary(snapshot.media);
   const brands = await uploadBrandImages(snapshot.brands);
   const categories = await uploadCategoryImages(snapshot.categories);
+  const banner = await uploadBannerPoster(snapshot.banner);
 
   const products = stripProductsForStorage(snapshot.products);
 
@@ -156,7 +165,7 @@ export async function saveCatalogToDb(
     brands,
     categories,
     media,
-    banner: snapshot.banner,
+    banner,
     updated_at: new Date().toISOString(),
   });
 
@@ -170,7 +179,7 @@ export async function saveCatalogToDb(
     brands,
     categories,
     media,
-    banner: snapshot.banner,
+    banner,
   };
 }
 

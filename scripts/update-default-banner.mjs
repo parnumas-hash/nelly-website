@@ -44,7 +44,7 @@ const banner = {
   ctaLabel: "Explore Collection",
   ctaHref: "/shop",
   videoUrl: "",
-  posterUrl: "/images/hero-banner.png",
+  posterUrl: "/images/hero-banner.jpg",
   active: true,
 };
 

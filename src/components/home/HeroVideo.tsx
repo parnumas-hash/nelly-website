@@ -8,6 +8,8 @@ import Button from "@/components/ui/Button";
 import { useCatalog } from "@/context/CatalogContext";
 import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 import { loadBanner } from "@/lib/admin/storage";
+import { HERO_BANNER_ASPECT } from "@/lib/brand-assets";
+import { shouldUnoptimizeBanner } from "@/lib/image-utils";
 
 export default function HeroVideo() {
   const prefersReducedMotion = useReducedMotion();
@@ -27,7 +29,12 @@ export default function HeroVideo() {
 
   if (!ready && !isRemoteCatalogEnabled()) {
     return (
-      <section className="relative -mt-16 min-h-[100svh] bg-neutral-900 md:-mt-20" />
+      <section className="relative w-full bg-[#f7f3ee]">
+        <div
+          className="mx-auto w-full max-w-[1920px] animate-pulse bg-neutral-200/80"
+          style={{ aspectRatio: HERO_BANNER_ASPECT }}
+        />
+      </section>
     );
   }
 
@@ -39,29 +46,37 @@ export default function HeroVideo() {
     return (
       <section
         aria-label={banner.title}
-        className="relative -mt-16 min-h-[100svh] overflow-hidden md:-mt-20"
+        className="relative w-full bg-[#f7f3ee]"
       >
-        <Image
-          src={banner.posterUrl}
-          alt={`${banner.title} — ${banner.subtitle}`}
-          fill
-          priority
-          className="object-cover object-center"
-          sizes="100vw"
-        />
+        <div className="relative mx-auto w-full max-w-[1920px]">
+          <div
+            className="relative w-full"
+            style={{ aspectRatio: HERO_BANNER_ASPECT }}
+          >
+            <Image
+              src={banner.posterUrl}
+              alt={`${banner.title} — ${banner.subtitle}`}
+              fill
+              priority
+              className="object-contain object-center"
+              sizes="100vw"
+              unoptimized={shouldUnoptimizeBanner(banner.posterUrl)}
+            />
 
-        <Link
-          href={banner.ctaHref}
-          className="absolute inset-0 z-10"
-          aria-label={banner.ctaLabel}
-        />
+            <Link
+              href={banner.ctaHref}
+              className="absolute inset-0 z-10"
+              aria-label={banner.ctaLabel}
+            />
+          </div>
+        </div>
 
         <motion.a
           href="#brands"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 0.6 }}
-          className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2 text-neutral-700/70 transition-colors hover:text-neutral-900"
+          className="flex flex-col items-center gap-2 py-4 text-neutral-600/80 transition-colors hover:text-neutral-900"
           aria-label="Scroll to shop by brand"
         >
           <span className="text-[10px] uppercase tracking-[0.25em]">Scroll</span>

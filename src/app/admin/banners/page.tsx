@@ -4,8 +4,11 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import BannerImageUpload from "@/components/admin/BannerImageUpload";
 import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultBanner } from "@/lib/admin/storage";
+import { HERO_BANNER_ASPECT } from "@/lib/brand-assets";
+import { shouldUnoptimizeBanner } from "@/lib/image-utils";
 
 export default function AdminBannersPage() {
   const { banner, updateBanner, ready } = useCatalog();
@@ -71,12 +74,16 @@ export default function AdminBannersPage() {
             onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
             placeholder="Leave empty to use poster image only"
           />
+          <BannerImageUpload
+            posterUrl={form.posterUrl}
+            onChange={(posterUrl) => setForm({ ...form, posterUrl })}
+          />
           <Input
             id="posterUrl"
             label="Poster / Banner Image URL"
             value={form.posterUrl}
             onChange={(e) => setForm({ ...form, posterUrl: e.target.value })}
-            placeholder="/images/hero-banner.png"
+            placeholder="/images/hero-banner.jpg"
           />
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -94,18 +101,26 @@ export default function AdminBannersPage() {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800">
-          <div className="relative aspect-[9/16] max-h-[520px] w-full bg-black md:aspect-video">
+          <div
+            className={`relative w-full bg-[#f7f3ee] ${useImageBanner ? "" : "min-h-[280px]"}`}
+          >
             {form.posterUrl && (
-              <Image
-                src={form.posterUrl}
-                alt="Banner preview"
-                fill
-                className={useImageBanner ? "object-cover" : "object-cover opacity-60"}
-                unoptimized={
-                  form.posterUrl.startsWith("data:") ||
-                  form.posterUrl.startsWith("/")
-                }
-              />
+              <div
+                className="relative w-full"
+                style={{ aspectRatio: HERO_BANNER_ASPECT }}
+              >
+                <Image
+                  src={form.posterUrl}
+                  alt="Banner preview"
+                  fill
+                  className={
+                    useImageBanner
+                      ? "object-contain object-center"
+                      : "object-cover object-center opacity-60"
+                  }
+                  unoptimized={shouldUnoptimizeBanner(form.posterUrl)}
+                />
+              </div>
             )}
             {!useImageBanner && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white">

@@ -72,17 +72,16 @@ export default function Header() {
           scrolled
             ? "bg-white/90 shadow-sm backdrop-blur-xl dark:bg-neutral-950/90"
             : isHome
-              ? "bg-transparent"
-              : "bg-white/80 backdrop-blur-md dark:bg-neutral-950/80",
-          isHome && !scrolled && "text-white"
+              ? "bg-white/55 backdrop-blur-md dark:bg-neutral-950/45"
+              : "bg-white/80 backdrop-blur-md dark:bg-neutral-950/80"
         )}
       >
         <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between px-4 md:h-20 md:px-6">
           <Logo
             size="md"
             priority
-            framed={isHome && !scrolled}
-            className={cn(isHome && !scrolled && "drop-shadow-md")}
+            framed={false}
+            className=""
           />
 
           <nav className="hidden items-center gap-8 lg:flex">
@@ -93,11 +92,9 @@ export default function Header() {
                 onClick={link.href === "/" ? handleHomeNav : undefined}
                 className={cn(
                   "text-sm font-medium tracking-wide transition-colors hover:text-primary",
-                  isHome && !scrolled
-                    ? "text-white/90 hover:text-white"
-                    : isNavLinkActive(pathname, link.href)
-                      ? "text-primary"
-                      : "text-neutral-600 dark:text-neutral-400"
+                  isNavLinkActive(pathname, link.href)
+                    ? "text-primary"
+                    : "text-neutral-600 dark:text-neutral-400"
                 )}
               >
                 {link.label}
@@ -108,27 +105,15 @@ export default function Header() {
           <div className="flex items-center gap-1 md:gap-2">
             <button
               onClick={() => setSearchOpen(true)}
-              className={cn(
-                "flex h-11 w-11 items-center justify-center rounded-full transition-colors",
-                isHome && !scrolled
-                  ? "text-white hover:bg-white/10"
-                  : "hover:bg-neutral-100 dark:hover:bg-neutral-900"
-              )}
+              className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900"
               aria-label="Search"
             >
               <Search className="h-4 w-4" />
             </button>
-            <ThemeToggle
-              className={cn(isHome && !scrolled && "text-white hover:bg-white/10")}
-            />
+            <ThemeToggle />
             <Link
               href="/wishlist"
-              className={cn(
-                "relative hidden h-11 w-11 items-center justify-center rounded-full transition-colors sm:flex",
-                isHome && !scrolled
-                  ? "text-white hover:bg-white/10"
-                  : "hover:bg-neutral-100 dark:hover:bg-neutral-900"
-              )}
+              className="relative hidden h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900 sm:flex"
             >
               <Heart className="h-4 w-4" />
               {wishlistItems.length > 0 && (
@@ -139,23 +124,13 @@ export default function Header() {
             </Link>
             <Link
               href="/login"
-              className={cn(
-                "hidden h-11 w-11 items-center justify-center rounded-full transition-colors sm:flex",
-                isHome && !scrolled
-                  ? "text-white hover:bg-white/10"
-                  : "hover:bg-neutral-100 dark:hover:bg-neutral-900"
-              )}
+              className="hidden h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900 sm:flex"
             >
-              <User className={cn("h-4 w-4", isAuthenticated && !isHome && "text-primary")} />
+              <User className={cn("h-4 w-4", isAuthenticated && "text-primary")} />
             </Link>
             <button
               onClick={() => setIsOpen(true)}
-              className={cn(
-                "relative flex h-11 w-11 items-center justify-center rounded-full transition-colors",
-                isHome && !scrolled
-                  ? "text-white hover:bg-white/10"
-                  : "hover:bg-neutral-100 dark:hover:bg-neutral-900"
-              )}
+              className="relative flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900"
               aria-label="Cart"
             >
               <ShoppingBag className="h-4 w-4" />
@@ -167,12 +142,7 @@ export default function Header() {
             </button>
             <button
               onClick={() => setMobileOpen(true)}
-              className={cn(
-                "flex h-11 w-11 items-center justify-center rounded-full transition-colors lg:hidden",
-                isHome && !scrolled
-                  ? "text-white hover:bg-white/10"
-                  : "hover:bg-neutral-100 dark:hover:bg-neutral-900"
-              )}
+              className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900 lg:hidden"
               aria-label="Menu"
             >
               <Menu className="h-5 w-5" />
