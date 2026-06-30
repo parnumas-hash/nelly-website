@@ -1,11 +1,52 @@
 import { AdminBrand, BrandCategory, Product, ProductPetType } from "@/types";
 import {
   filterCategoriesForPetType,
+  getCategoryById,
   getCategoryBySlug,
   sortBrandsAlphabetically,
 } from "@/lib/brand-categories";
 import { categories as legacyCategories } from "@/lib/products";
 import { brandToSlug } from "@/lib/utils";
+
+function legacyCategoryMatches(
+  categoryId: string,
+  category: BrandCategory
+): boolean {
+  const legacy = legacyCategories.find(
+    (item) => item.id === categoryId || item.slug === categoryId
+  );
+  if (!legacy) return false;
+  return legacy.slug === category.slug || legacy.id === category.id;
+}
+
+/** Single source of truth: does this product belong in this category? */
+export function productMatchesBrandCategory(
+  product: Product,
+  category: BrandCategory,
+  categories: BrandCategory[] = []
+): boolean {
+  if (product.categoryId) {
+    if (
+      product.categoryId === category.id ||
+      product.categoryId === category.slug
+    ) {
+      return true;
+    }
+
+    const resolved = getCategoryById(categories, product.categoryId);
+    if (resolved) {
+      return resolved.id === category.id;
+    }
+
+    return legacyCategoryMatches(product.categoryId, category);
+  }
+
+  if (!product.category || product.category === "all") return false;
+
+  return (
+    product.category === category.slug || product.category === category.id
+  );
+}
 
 export function hasProductPetType(
   product: Pick<Product, "petType">
@@ -41,7 +82,9 @@ export function productMatchesCategoryFilter(
   categories: BrandCategory[] = []
 ): boolean {
   const category = getCategoryBySlug(categories, categorySlug);
-  if (category) return product.categoryId === category.id;
+  if (category) {
+    return productMatchesBrandCategory(product, category, categories);
+  }
   return product.category === categorySlug;
 }
 
@@ -80,10 +123,8 @@ export function getAvailableBrandCategoriesForShop(
   const brandProducts = getBrandProductsForShop(products, brand, petType);
 
   return candidates.filter((category) =>
-    brandProducts.some(
-      (product) =>
-        product.categoryId === category.id ||
-        product.category === category.slug
+    brandProducts.some((product) =>
+      productMatchesBrandCategory(product, category, allCategories)
     )
   );
 }
@@ -98,10 +139,8 @@ export function getAvailableShopCategoriesForBrand(
   const activeCategories = allCategories.filter((category) => category.active);
 
   return activeCategories.filter((category) =>
-    brandProducts.some(
-      (product) =>
-        product.categoryId === category.id ||
-        product.category === category.slug
+    brandProducts.some((product) =>
+      productMatchesBrandCategory(product, category, allCategories)
     )
   );
 }
@@ -122,9 +161,19 @@ export function getAvailableLegacyCategoriesForShop(
 
   return legacyCategories
     .filter((category) => category.slug !== "all")
-    .filter((category) =>
-      pool.some((product) => product.category === category.slug)
-    );
+    .filter((category) => {
+      const asBrandCategory: BrandCategory = {
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+        petType: "both",
+        sortOrder: 0,
+        active: true,
+      };
+      return pool.some((product) =>
+        productMatchesBrandCategory(product, asBrandCategory, [])
+      );
+    });
 }
 
 export function getBrandsWithShopProducts(

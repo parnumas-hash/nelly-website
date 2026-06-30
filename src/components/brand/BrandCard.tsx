@@ -32,7 +32,7 @@ export default function BrandCard({ brand, index = 0 }: BrandCardProps) {
       transition={{ delay: index * 0.06, duration: 0.5 }}
     >
       <Link
-        href={`/brands/${brand.slug}`}
+        href={`/shop?brand=${brand.slug}`}
         className="group block overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-neutral-100 transition-all duration-500 hover:shadow-lg hover:ring-neutral-200 dark:bg-neutral-900 dark:ring-neutral-800 dark:hover:ring-neutral-700"
       >
         {imageSrc ? (

@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Pencil, Search, Trash2, X } from "lucide-react";
+import { FileSpreadsheet, Plus, Pencil, Search, Trash2, Upload, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import SafeImage from "@/components/ui/SafeImage";
+import ProductImportDialog from "@/components/admin/ProductImportDialog";
 import { useCatalog } from "@/context/CatalogContext";
+import { downloadProductImportTemplate } from "@/lib/admin/product-import";
 import { getBrandById } from "@/lib/brand-categories";
 import { getSeedImagesForProduct } from "@/lib/image-utils";
 import {
@@ -34,8 +36,9 @@ export default function ProductsAdminPage() {
   const brandParam = searchParams.get("brand") || "";
   const queryParam = searchParams.get("q") || "";
 
-  const { adminProducts, brands, deleteProduct, ready } = useCatalog();
+  const { adminProducts, brands, categories, deleteProduct, ready } = useCatalog();
   const [searchInput, setSearchInput] = useState(queryParam);
+  const [importOpen, setImportOpen] = useState(false);
 
   const brandOptions = useMemo(() => {
     const counts = new Map<string, number>();
@@ -123,19 +126,41 @@ export default function ProductsAdminPage() {
             {activeBrand ? ` · ${activeBrand.displayName}` : ""}
           </p>
         </div>
-        <Link
-          href={
-            brandParam
-              ? `/admin/products/new?brandId=${brandParam}`
-              : "/admin/products/new"
-          }
-        >
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Product
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={() => downloadProductImportTemplate(brands, categories)}
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Download Template
           </Button>
-        </Link>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={() => setImportOpen(true)}
+          >
+            <Upload className="h-4 w-4" />
+            Import Products
+          </Button>
+          <Link
+            href={
+              brandParam
+                ? `/admin/products/new?brandId=${brandParam}`
+                : "/admin/products/new"
+            }
+          >
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Product
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      <ProductImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
 
       <div className="mb-6 space-y-4">
         <form onSubmit={handleSearchSubmit} className="relative max-w-md">

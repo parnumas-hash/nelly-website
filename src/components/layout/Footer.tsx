@@ -36,7 +36,7 @@ export default function Footer() {
     .filter((brand) => brand.active)
     .map((brand) => ({
       label: brand.displayName,
-      href: `/brands/${brand.slug}`,
+      href: `/shop?brand=${brand.slug}`,
     }));
 
   const logoSrc = footer.logoUrl;

@@ -69,11 +69,17 @@ import {
 import { getSeedImagesForProduct, PLACEHOLDER_IMAGE } from "@/lib/image-utils";
 import {
   getBrandBySlug,
+  getCategoryById,
   getCategoryBySlug,
   normalizeBrandCategories,
   sortBrandsAlphabetically,
 } from "@/lib/brand-categories";
-import { filterShopVisibleProducts, productMatchesPetTypeFilter } from "@/lib/shop-filters";
+import {
+  filterShopVisibleProducts,
+  productMatchesBrandCategory,
+  productMatchesCategoryFilter,
+  productMatchesPetTypeFilter,
+} from "@/lib/shop-filters";
 import { variantComboKey } from "@/lib/variant-matrix";
 import {
   applyCatalogBackup,
@@ -95,6 +101,11 @@ import { normalizeCatalogSnapshot } from "@/lib/admin/catalog-normalize";
 import { fetchStagedLocalRestore } from "@/lib/admin/local-restore";
 import { getDefaultCatalogSnapshot } from "@/lib/supabase/catalog-store";
 import { CATALOG_VERSION } from "@/lib/admin/storage";
+import {
+  applyProductImportGroups,
+  type ProductImportGroup,
+  type ProductImportMode,
+} from "@/lib/admin/product-import";
 
 interface CatalogContextType {
   ready: boolean;
@@ -148,6 +159,10 @@ interface CatalogContextType {
   getNewArrivals: () => Product[];
   getBestSellers: () => Product[];
   searchProducts: (query: string) => Product[];
+  importProducts: (
+    groups: import("@/lib/admin/product-import").ProductImportGroup[],
+    mode: import("@/lib/admin/product-import").ProductImportMode
+  ) => { created: number; updated: number };
 }
 
 const CatalogContext = createContext<CatalogContextType | undefined>(undefined);
@@ -1102,15 +1117,18 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       }
 
       if (filters.categoryId) {
-        result = result.filter((p) => p.categoryId === filters.categoryId);
+        const category = getCategoryById(categories, filters.categoryId);
+        if (category) {
+          result = result.filter((p) =>
+            productMatchesBrandCategory(p, category, categories)
+          );
+        } else {
+          result = result.filter((p) => p.categoryId === filters.categoryId);
+        }
       } else if (filters.category && filters.category !== "all") {
-        result = result.filter((p) => {
-          const category = getCategoryBySlug(categories, filters.category!);
-          if (category) {
-            return p.categoryId === category.id;
-          }
-          return p.category === filters.category;
-        });
+        result = result.filter((p) =>
+          productMatchesCategoryFilter(p, filters.category!, categories)
+        );
       } else if (filters.category === "all") {
         // keep all
       }
@@ -1169,6 +1187,19 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     [filterProducts]
   );
 
+  const importProducts = useCallback(
+    (groups: ProductImportGroup[], mode: ProductImportMode) => {
+      const { nextProducts, created, updated } = applyProductImportGroups(
+        adminProducts,
+        groups,
+        mode
+      );
+      persistProducts(nextProducts);
+      return { created, updated };
+    },
+    [adminProducts, persistProducts]
+  );
+
   const sortedBrands = useMemo(
     () => sortBrandsAlphabetically(brands),
     [brands]
@@ -1219,6 +1250,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     getNewArrivals,
     getBestSellers,
     searchProducts,
+    importProducts,
   };
 
   return (

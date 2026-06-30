@@ -20,7 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const brandUrls = brands.map((brand) => ({
-    url: `${baseUrl}/brands/${brand.slug}`,
+    url: `${baseUrl}/shop?brand=${brand.slug}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.7,

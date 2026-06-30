@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState, useMemo, useEffect } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import PageTransition from "@/components/ui/PageTransition";
@@ -28,6 +28,7 @@ function buildShopHref(params: Record<string, string | undefined>) {
 }
 
 function ShopContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category") || "";
   const brandParam = searchParams.get("brand") || "";
@@ -94,6 +95,44 @@ function ShopContent() {
       ).length > 0
     );
   }, [ready, activeBrand, petTypeParam, publishedProducts]);
+
+  useEffect(() => {
+    if (!ready || !categoryParam) return;
+
+    if (activeBrand) {
+      const availableSlugs = brandCategories.map((category) => category.slug);
+      if (!availableSlugs.includes(categoryParam)) {
+        router.replace(
+          buildShopHref({
+            brand: brandParam,
+            petType: petTypeParam || undefined,
+            sort: sort !== "featured" ? sort : undefined,
+          })
+        );
+      }
+      return;
+    }
+
+    const availableSlugs = legacyCategories.map((category) => category.slug);
+    if (availableSlugs.length > 0 && !availableSlugs.includes(categoryParam)) {
+      router.replace(
+        buildShopHref({
+          brand: brandParam || undefined,
+          sort: sort !== "featured" ? sort : undefined,
+        })
+      );
+    }
+  }, [
+    ready,
+    activeBrand,
+    categoryParam,
+    brandCategories,
+    legacyCategories,
+    brandParam,
+    petTypeParam,
+    sort,
+    router,
+  ]);
 
   const products = useMemo(
     () =>
