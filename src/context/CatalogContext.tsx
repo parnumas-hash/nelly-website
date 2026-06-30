@@ -156,11 +156,11 @@ interface CatalogContextType {
   unusedMediaCount: number;
   storageError: string | null;
   clearStorageError: () => void;
-  updateBanner: (data: Partial<HeroBanner>) => void;
-  updateFooter: (data: Partial<FooterBranding>) => void;
-  updateAbout: (data: Partial<AboutSection>) => void;
-  updateHomeCollections: (data: HomeCollections) => void;
-  updateHomepageContent: (data: Partial<HomepageContent>) => void;
+  updateBanner: (data: Partial<HeroBanner>) => boolean;
+  updateFooter: (data: Partial<FooterBranding>) => boolean;
+  updateAbout: (data: Partial<AboutSection>) => boolean;
+  updateHomeCollections: (data: HomeCollections) => boolean;
+  updateHomepageContent: (data: Partial<HomepageContent>) => boolean;
   getProductBySlug: (slug: string) => Product | undefined;
   getAdminProduct: (id: string) => AdminProduct | undefined;
   filterProducts: (filters: ProductFilters) => Product[];
@@ -1053,95 +1053,97 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     [applyCatalogSnapshot]
   );
 
-  const updateBanner = useCallback((data: Partial<HeroBanner>) => {
-    setBanner((prev) => {
-      const next = { ...(prev ?? resolveBannerFallback()), ...data };
-      try {
-        writeBannerLocal(next);
-        setStorageError(null);
-        syncRemoteCatalog();
-      } catch (error) {
-        if (error instanceof StorageQuotaError) {
-          setStorageError(error.message);
-        } else {
-          setStorageError("Could not save banner.");
-        }
-      }
-      return next;
-    });
-  }, [syncRemoteCatalog, resolveBannerFallback]);
-
-  const updateFooter = useCallback((data: Partial<FooterBranding>) => {
-    setFooter((prev) => {
-      const next = { ...(prev ?? resolveFooterFallback()), ...data };
-      try {
-        writeFooterLocal(next);
-        setStorageError(null);
-        syncRemoteCatalog();
-      } catch (error) {
-        if (error instanceof StorageQuotaError) {
-          setStorageError(error.message);
-        } else {
-          setStorageError("Could not save footer.");
-        }
-      }
-      return next;
-    });
-  }, [syncRemoteCatalog, resolveFooterFallback]);
-
-  const updateAbout = useCallback((data: Partial<AboutSection>) => {
-    setAbout((prev) => {
-      const next = { ...(prev ?? resolveAboutFallback()), ...data };
-      try {
-        writeAboutLocal(next);
-        setStorageError(null);
-        syncRemoteCatalog();
-      } catch (error) {
-        if (error instanceof StorageQuotaError) {
-          setStorageError(error.message);
-        } else {
-          setStorageError("Could not save about section.");
-        }
-      }
-      return next;
-    });
-  }, [syncRemoteCatalog, resolveAboutFallback]);
-
-  const updateHomeCollections = useCallback((data: HomeCollections) => {
-    setHomeCollections(data);
+  const updateBanner = useCallback((data: Partial<HeroBanner>): boolean => {
+    const next = { ...(bannerRef.current ?? resolveBannerFallback()), ...data };
     try {
-      writeHomeCollectionsLocal(data);
+      writeBannerLocal(next);
+      setBanner(next);
       setStorageError(null);
       syncRemoteCatalog();
+      return true;
+    } catch (error) {
+      if (error instanceof StorageQuotaError) {
+        setStorageError(error.message);
+      } else {
+        setStorageError("Could not save banner.");
+      }
+      return false;
+    }
+  }, [syncRemoteCatalog, resolveBannerFallback]);
+
+  const updateFooter = useCallback((data: Partial<FooterBranding>): boolean => {
+    const next = { ...(footerRef.current ?? resolveFooterFallback()), ...data };
+    try {
+      writeFooterLocal(next);
+      setFooter(next);
+      setStorageError(null);
+      syncRemoteCatalog();
+      return true;
+    } catch (error) {
+      if (error instanceof StorageQuotaError) {
+        setStorageError(error.message);
+      } else {
+        setStorageError("Could not save footer.");
+      }
+      return false;
+    }
+  }, [syncRemoteCatalog, resolveFooterFallback]);
+
+  const updateAbout = useCallback((data: Partial<AboutSection>): boolean => {
+    const next = { ...(aboutRef.current ?? resolveAboutFallback()), ...data };
+    try {
+      writeAboutLocal(next);
+      setAbout(next);
+      setStorageError(null);
+      syncRemoteCatalog();
+      return true;
+    } catch (error) {
+      if (error instanceof StorageQuotaError) {
+        setStorageError(error.message);
+      } else {
+        setStorageError("Could not save about section.");
+      }
+      return false;
+    }
+  }, [syncRemoteCatalog, resolveAboutFallback]);
+
+  const updateHomeCollections = useCallback((data: HomeCollections): boolean => {
+    try {
+      writeHomeCollectionsLocal(data);
+      setHomeCollections(data);
+      setStorageError(null);
+      syncRemoteCatalog();
+      return true;
     } catch (error) {
       if (error instanceof StorageQuotaError) {
         setStorageError(error.message);
       } else {
         setStorageError("Could not save home collections.");
       }
+      return false;
     }
   }, [syncRemoteCatalog]);
 
   const updateHomepageContent = useCallback(
-    (data: Partial<HomepageContent>) => {
-      setHomepageContent((prev) => {
-        const next = mergeHomepageContent(
-          prev ?? resolveHomepageContentFallback(),
-          data
-        );
-        try {
-          writeHomepageContentLocal(next);
-          setStorageError(null);
-          syncRemoteCatalog();
-        } catch (error) {
-          if (error instanceof StorageQuotaError) {
-            setStorageError(error.message);
-          } else {
-            setStorageError("Could not save homepage content.");
-          }
+    (data: Partial<HomepageContent>): boolean => {
+      const next = mergeHomepageContent(
+        homepageContentRef.current ?? resolveHomepageContentFallback(),
+        data
+      );
+      try {
+        writeHomepageContentLocal(next);
+        setHomepageContent(next);
+        setStorageError(null);
+        syncRemoteCatalog();
+        return true;
+      } catch (error) {
+        if (error instanceof StorageQuotaError) {
+          setStorageError(error.message);
+        } else {
+          setStorageError("Could not save homepage content.");
         }
-        return next;
-      });
+        return false;
+      }
     },
     [syncRemoteCatalog, resolveHomepageContentFallback]
   );

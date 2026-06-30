@@ -5,6 +5,7 @@ import Image from "next/image";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import FooterLogoUpload from "@/components/admin/FooterLogoUpload";
+import { useSiteContentSave } from "@/components/admin/AdminToast";
 import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultHomeCollections } from "@/lib/admin/storage";
 import { getCollectionTab } from "@/lib/admin/site-content-tabs";
@@ -31,6 +32,8 @@ export default function CollectionSectionEditor({
   const [form, setForm] = useState(homeCollections);
   const tab = getCollectionTab(collectionKey);
 
+  const saveWithToast = useSiteContentSave();
+
   useEffect(() => {
     setForm(homeCollections);
   }, [homeCollections]);
@@ -39,7 +42,7 @@ export default function CollectionSectionEditor({
     return <div className="py-20 text-center text-neutral-400">Loading...</div>;
   }
 
-  const save = () => updateHomeCollections(form);
+  const save = () => saveWithToast(() => updateHomeCollections(form));
   const applyDefault = () => {
     const defaults = getDefaultHomeCollections();
     setForm((prev) => ({

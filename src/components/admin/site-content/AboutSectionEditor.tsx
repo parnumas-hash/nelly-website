@@ -6,6 +6,7 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import TextLink from "@/components/ui/TextLink";
 import FooterLogoUpload from "@/components/admin/FooterLogoUpload";
+import { useSiteContentSave } from "@/components/admin/AdminToast";
 import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultAbout } from "@/lib/admin/storage";
 import { BRAND_LOGO_HEIGHT, BRAND_LOGO_WIDTH } from "@/lib/brand-assets";
@@ -20,11 +21,13 @@ export default function AboutSectionEditor() {
     setForm(about);
   }, [about]);
 
+  const saveWithToast = useSiteContentSave();
+
   if (!ready) {
     return <div className="py-20 text-center text-neutral-400">Loading...</div>;
   }
 
-  const save = () => updateAbout(form);
+  const save = () => saveWithToast(() => updateAbout(form));
   const applyDefault = () => setForm(getDefaultAbout());
   const previewImage = form.imageUrl || getDefaultAbout().imageUrl;
   const paragraphs = form.body.split(/\n\n+/).filter(Boolean);

@@ -6,6 +6,7 @@ import Link from "next/link";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import FooterLogoUpload from "@/components/admin/FooterLogoUpload";
+import { useSiteContentSave } from "@/components/admin/AdminToast";
 import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultFooter } from "@/lib/admin/storage";
 import { BRAND_LOGO_HEIGHT, BRAND_LOGO_WIDTH } from "@/lib/brand-assets";
@@ -19,11 +20,13 @@ export default function FooterSectionEditor() {
     setForm(footer);
   }, [footer]);
 
+  const saveWithToast = useSiteContentSave();
+
   if (!ready) {
     return <div className="py-20 text-center text-neutral-400">Loading...</div>;
   }
 
-  const save = () => updateFooter(form);
+  const save = () => saveWithToast(() => updateFooter(form));
   const applyDefault = () => setForm(getDefaultFooter());
   const previewLogo = form.logoUrl || getDefaultFooter().logoUrl;
 

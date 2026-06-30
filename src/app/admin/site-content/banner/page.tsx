@@ -5,6 +5,7 @@ import Image from "next/image";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import BannerImageUpload from "@/components/admin/BannerImageUpload";
+import { useSiteContentSave } from "@/components/admin/AdminToast";
 import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultBanner } from "@/lib/admin/storage";
 import { HERO_BANNER_ASPECT } from "@/lib/brand-assets";
@@ -14,6 +15,8 @@ export default function SiteContentBannerPage() {
   const { banner, updateBanner, ready } = useCatalog();
   const [form, setForm] = useState(banner);
 
+  const saveWithToast = useSiteContentSave();
+
   useEffect(() => {
     setForm(banner);
   }, [banner]);
@@ -22,7 +25,7 @@ export default function SiteContentBannerPage() {
     return <div className="py-20 text-center text-neutral-400">Loading...</div>;
   }
 
-  const save = () => updateBanner(form);
+  const save = () => saveWithToast(() => updateBanner(form));
   const applyDefaultBanner = () => setForm(getDefaultBanner());
   const useImageBanner = !form.videoUrl?.trim();
 

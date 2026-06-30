@@ -1,19 +1,26 @@
+"use client";
+
 import Button from "@/components/ui/Button";
+import { useSiteContentSave } from "@/components/admin/AdminToast";
 
 interface SiteContentFormActionsProps {
   saveLabel: string;
-  onSave: () => void;
+  onSave: () => boolean;
   onReset: () => void;
+  successMessage?: string;
 }
 
 export default function SiteContentFormActions({
   saveLabel,
   onSave,
   onReset,
+  successMessage,
 }: SiteContentFormActionsProps) {
+  const saveWithToast = useSiteContentSave();
+
   return (
     <div className="flex flex-wrap gap-3">
-      <Button onClick={onSave}>{saveLabel}</Button>
+      <Button onClick={() => saveWithToast(onSave, successMessage)}>{saveLabel}</Button>
       <Button type="button" variant="outline" onClick={onReset}>
         Reset to default
       </Button>
