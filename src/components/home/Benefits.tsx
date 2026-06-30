@@ -1,3 +1,5 @@
+"use client";
+
 import { benefits } from "@/lib/benefits";
 import Section from "@/components/ui/Section";
 import SectionHeader from "@/components/ui/SectionHeader";
