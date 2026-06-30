@@ -37,26 +37,21 @@ export function persistMedia(media: MediaItem[]): void {
 }
 
 export function persistBanner(banner: HeroBanner): void {
-  if (isCloudCatalogMode()) return;
   saveBanner(banner);
 }
 
 export function persistFooter(footer: FooterBranding): void {
-  if (isCloudCatalogMode()) return;
   saveFooter(footer);
 }
 
 export function persistAbout(about: AboutSection): void {
-  if (isCloudCatalogMode()) return;
   saveAbout(about);
 }
 
 export function persistHomeCollections(homeCollections: HomeCollections): void {
-  if (isCloudCatalogMode()) return;
   saveHomeCollections(homeCollections);
 }
 
 export function persistHomepageContent(homepageContent: HomepageContent): void {
-  if (isCloudCatalogMode()) return;
   saveHomepageContent(homepageContent);
 }

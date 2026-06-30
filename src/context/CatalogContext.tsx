@@ -320,37 +320,27 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  useEffect(() => {
-    setCatalogSyncHandlers({
-      onError: (message) =>
-        setStorageError(`Cloud save failed: ${message}`),
-      onSuccess: () => {
-        setStorageError((current) =>
-          current?.startsWith("Cloud save failed:") ? null : current
-        );
-      },
-    });
-    return () => setCatalogSyncHandlers({});
-  }, []);
-
-  const syncRemoteCatalog = useCallback(() => {
-    scheduleRemoteCatalogSync(
-      normalizeCatalogSnapshot({
-        catalogVersion: CATALOG_VERSION,
-        products: adminProductsRef.current,
-        brands: brandsRef.current,
-        categories: categoriesRef.current,
-        media: mediaRef.current,
-        banner: bannerRef.current ?? resolveBannerFallback(),
-        footer: footerRef.current ?? resolveFooterFallback(),
-        about: aboutRef.current ?? resolveAboutFallback(),
-        homeCollections:
-          homeCollectionsRef.current ?? resolveHomeCollectionsFallback(),
-        homepageContent:
-          homepageContentRef.current ?? resolveHomepageContentFallback(),
-      })
-    );
-  }, [
+  const syncRemoteCatalog = useCallback(
+    (overrides?: Partial<CatalogSyncSnapshot>) => {
+      scheduleRemoteCatalogSync(
+        normalizeCatalogSnapshot({
+          catalogVersion: CATALOG_VERSION,
+          products: adminProductsRef.current,
+          brands: brandsRef.current,
+          categories: categoriesRef.current,
+          media: mediaRef.current,
+          banner: bannerRef.current ?? resolveBannerFallback(),
+          footer: footerRef.current ?? resolveFooterFallback(),
+          about: aboutRef.current ?? resolveAboutFallback(),
+          homeCollections:
+            homeCollectionsRef.current ?? resolveHomeCollectionsFallback(),
+          homepageContent:
+            homepageContentRef.current ?? resolveHomepageContentFallback(),
+          ...overrides,
+        })
+      );
+    },
+    [
     resolveBannerFallback,
     resolveFooterFallback,
     resolveAboutFallback,
@@ -375,18 +365,40 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       const normalized = normalizeCatalogSnapshot(snapshot);
       const enriched = enrichProducts(normalized.products, normalized.media);
       setAdminProducts(enriched);
+      adminProductsRef.current = enriched;
       setBrands(normalized.brands);
+      brandsRef.current = normalized.brands;
       setCategories(normalized.categories);
+      categoriesRef.current = normalized.categories;
       setMedia(normalized.media);
       mediaRef.current = normalized.media;
       setBanner(normalized.banner);
+      bannerRef.current = normalized.banner;
       setFooter(normalized.footer);
+      footerRef.current = normalized.footer;
       setAbout(normalized.about);
+      aboutRef.current = normalized.about;
       setHomeCollections(normalized.homeCollections);
+      homeCollectionsRef.current = normalized.homeCollections;
       setHomepageContent(normalized.homepageContent);
+      homepageContentRef.current = normalized.homepageContent;
     },
     [enrichProducts]
   );
+
+  useEffect(() => {
+    setCatalogSyncHandlers({
+      onError: (message) =>
+        setStorageError(`Cloud save failed: ${message}`),
+      onSuccess: (saved) => {
+        applyCatalogSnapshot(saved);
+        setStorageError((current) =>
+          current?.startsWith("Cloud save failed:") ? null : current
+        );
+      },
+    });
+    return () => setCatalogSyncHandlers({});
+  }, [applyCatalogSnapshot]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1057,9 +1069,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     const next = { ...(bannerRef.current ?? resolveBannerFallback()), ...data };
     try {
       writeBannerLocal(next);
+      bannerRef.current = next;
       setBanner(next);
       setStorageError(null);
-      syncRemoteCatalog();
+      syncRemoteCatalog({ banner: next });
       return true;
     } catch (error) {
       if (error instanceof StorageQuotaError) {
@@ -1075,9 +1088,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     const next = { ...(footerRef.current ?? resolveFooterFallback()), ...data };
     try {
       writeFooterLocal(next);
+      footerRef.current = next;
       setFooter(next);
       setStorageError(null);
-      syncRemoteCatalog();
+      syncRemoteCatalog({ footer: next });
       return true;
     } catch (error) {
       if (error instanceof StorageQuotaError) {
@@ -1093,9 +1107,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     const next = { ...(aboutRef.current ?? resolveAboutFallback()), ...data };
     try {
       writeAboutLocal(next);
+      aboutRef.current = next;
       setAbout(next);
       setStorageError(null);
-      syncRemoteCatalog();
+      syncRemoteCatalog({ about: next });
       return true;
     } catch (error) {
       if (error instanceof StorageQuotaError) {
@@ -1110,9 +1125,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const updateHomeCollections = useCallback((data: HomeCollections): boolean => {
     try {
       writeHomeCollectionsLocal(data);
+      homeCollectionsRef.current = data;
       setHomeCollections(data);
       setStorageError(null);
-      syncRemoteCatalog();
+      syncRemoteCatalog({ homeCollections: data });
       return true;
     } catch (error) {
       if (error instanceof StorageQuotaError) {
@@ -1132,9 +1148,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       );
       try {
         writeHomepageContentLocal(next);
+        homepageContentRef.current = next;
         setHomepageContent(next);
         setStorageError(null);
-        syncRemoteCatalog();
+        syncRemoteCatalog({ homepageContent: next });
         return true;
       } catch (error) {
         if (error instanceof StorageQuotaError) {

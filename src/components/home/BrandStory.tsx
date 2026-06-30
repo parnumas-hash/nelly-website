@@ -1,13 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Section from "@/components/ui/Section";
 import SectionHeader from "@/components/ui/SectionHeader";
 import TextLink from "@/components/ui/TextLink";
 import FadeIn from "@/components/ui/FadeIn";
+import SafeImage from "@/components/ui/SafeImage";
 import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultHomepageContent } from "@/lib/admin/homepage-content";
-import { shouldUnoptimize } from "@/lib/image-utils";
 
 export default function BrandStory() {
   const { homepageContent } = useCatalog();
@@ -20,13 +19,12 @@ export default function BrandStory() {
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
         <FadeIn direction="left">
           <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-neutral-100 dark:bg-neutral-900">
-            <Image
+            <SafeImage
               src={imageSrc}
               alt={content.imageAlt || fallback.imageAlt}
               fill
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 50vw"
-              unoptimized={shouldUnoptimize(imageSrc)}
             />
           </div>
         </FadeIn>

@@ -215,7 +215,7 @@ async function uploadHomepageContent(
   if (next.brandStory.imageUrl?.startsWith("data:")) {
     const url = await ensurePublicUrl(
       next.brandStory.imageUrl,
-      "homepage/brand-story.jpg"
+      `homepage/brand-story-${Date.now()}.jpg`
     );
     next = {
       ...next,

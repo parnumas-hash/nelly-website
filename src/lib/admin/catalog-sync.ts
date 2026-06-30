@@ -33,7 +33,7 @@ let pendingSnapshot: CatalogSyncSnapshot | null = null;
 
 export interface CatalogSyncHandlers {
   onError?: (message: string) => void;
-  onSuccess?: () => void;
+  onSuccess?: (snapshot: CatalogSyncSnapshot) => void;
 }
 
 let syncHandlers: CatalogSyncHandlers = {};
@@ -42,7 +42,9 @@ export function setCatalogSyncHandlers(handlers: CatalogSyncHandlers): void {
   syncHandlers = handlers;
 }
 
-async function pushSnapshot(snapshot: CatalogSyncSnapshot): Promise<void> {
+async function pushSnapshot(
+  snapshot: CatalogSyncSnapshot
+): Promise<CatalogSyncSnapshot> {
   const response = await fetch("/api/catalog", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -55,6 +57,8 @@ async function pushSnapshot(snapshot: CatalogSyncSnapshot): Promise<void> {
     } | null;
     throw new Error(body?.error ?? "Could not save catalog to server.");
   }
+
+  return (await response.json()) as CatalogSyncSnapshot;
 }
 
 async function flushQueue(): Promise<void> {
@@ -65,8 +69,8 @@ async function flushQueue(): Promise<void> {
   pendingSnapshot = null;
 
   try {
-    await pushSnapshot(snapshot);
-    syncHandlers.onSuccess?.();
+    const saved = await pushSnapshot(snapshot);
+    syncHandlers.onSuccess?.(saved);
   } catch (error) {
     const message =
       error instanceof Error
