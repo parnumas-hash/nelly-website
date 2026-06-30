@@ -48,7 +48,7 @@ export default function FooterLogoUpload({
   const previewObjectFit = imageSpec?.previewObjectFit ?? "contain";
   const uploadHint = imageSpec
     ? formatUploadHint(imageSpec)
-    : "PNG or JPG · up to 5 MB";
+    : "PNG or JPG · max 5 MB (auto-compressed if larger)";
 
   const closeCropModal = () => {
     setPendingCrop(null);

@@ -84,7 +84,7 @@ export default function SortableImageUpload({
         <Upload className="mb-2 h-6 w-6 text-neutral-400" />
         <p className="text-xs text-neutral-500">Click to upload · drag to reorder</p>
         <p className="mt-1 text-[10px] text-neutral-400">
-          Up to {maxImages} images · max 5 MB · up to 1920px high quality
+          Up to {maxImages} images · max 5 MB (auto-compressed) · up to 1920px
         </p>
       </div>
 

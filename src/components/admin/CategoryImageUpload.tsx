@@ -278,7 +278,7 @@ export default function CategoryImageUpload({
 
                 <Upload className="h-3 w-3" />
 
-                Square or 4:3 crop · up to 5 MB
+                Square or 4:3 crop · max 5 MB (auto-compressed)
 
               </p>
 

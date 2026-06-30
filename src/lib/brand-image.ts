@@ -1,3 +1,5 @@
+import { compressImageFile } from "./media-compress";
+
 export function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -7,12 +9,7 @@ export function fileToBase64(file: File): Promise<string> {
   });
 }
 
+/** Read and compress an uploaded brand/site image (auto-fits under 5 MB). */
 export async function readBrandImageFile(file: File): Promise<string> {
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Please upload an image file.");
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    throw new Error("Image must be under 5 MB.");
-  }
-  return fileToBase64(file);
+  return compressImageFile(file);
 }

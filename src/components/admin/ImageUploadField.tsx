@@ -50,7 +50,7 @@ export default function ImageUploadField({
       >
         <Upload className="mb-2 h-8 w-8 text-neutral-400" />
         <p className="text-sm text-neutral-500">Click to upload images</p>
-        <p className="mt-1 text-xs text-neutral-400">Max 5 MB · up to 1920px · high quality</p>
+        <p className="mt-1 text-xs text-neutral-400">Max 5 MB (auto-compressed) · up to 1920px</p>
       </div>
 
       <input
