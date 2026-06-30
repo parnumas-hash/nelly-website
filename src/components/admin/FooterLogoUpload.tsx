@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { ImageIcon, Upload, X } from "lucide-react";
 import ImageCropModal from "@/components/admin/ImageCropModal";
-import { readBrandImageFile } from "@/lib/brand-image";
+import { readSiteContentImageFile } from "@/lib/brand-image";
 import { imageNeedsCrop } from "@/lib/crop-image";
 import { shouldUnoptimize } from "@/lib/image-utils";
 import {
@@ -66,7 +66,7 @@ export default function FooterLogoUpload({
     setUploading(true);
     let openedCropModal = false;
     try {
-      const dataUrl = await readBrandImageFile(file);
+      const dataUrl = await readSiteContentImageFile(file);
       const mimeType = file.type || "image/jpeg";
 
       if (imageSpec && (await imageNeedsCrop(dataUrl, imageSpec.aspect))) {

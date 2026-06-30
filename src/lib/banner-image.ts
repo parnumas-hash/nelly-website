@@ -1,10 +1,14 @@
-import { compressImageFile } from "@/lib/media-compress";
+import { compressImageFile, SITE_CONTENT_MAX_BYTES, SITE_CONTENT_MAX_WIDTH, SITE_CONTENT_PRESERVE_ORIGINAL_MAX_BYTES } from "@/lib/media-compress";
 
-export const BANNER_MAX_BYTES = 5 * 1024 * 1024;
-export const BANNER_MAX_WIDTH = 1920;
-export const BANNER_JPEG_QUALITY = 0.92;
-
-/** Read and compress an uploaded banner image (auto-fits under 5 MB). */
+/** Read and compress an uploaded banner/site image for browser storage limits. */
 export async function readBannerImageFile(file: File): Promise<string> {
-  return compressImageFile(file);
+  return compressImageFile(file, {
+    maxBytes: SITE_CONTENT_MAX_BYTES,
+    maxWidth: SITE_CONTENT_MAX_WIDTH,
+    preserveOriginalMaxBytes: SITE_CONTENT_PRESERVE_ORIGINAL_MAX_BYTES,
+  });
 }
+
+export const BANNER_MAX_BYTES = SITE_CONTENT_MAX_BYTES;
+export const BANNER_MAX_WIDTH = SITE_CONTENT_MAX_WIDTH;
+export const BANNER_JPEG_QUALITY = 0.92;

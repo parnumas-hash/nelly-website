@@ -96,5 +96,5 @@ export const SITE_IMAGE_SPECS = {
 } as const satisfies Record<string, ImageUploadSpec>;
 
 export function formatUploadHint(spec: ImageUploadSpec, maxMb = 5): string {
-  return `PNG or JPG · max ${maxMb} MB (auto-compressed if larger) · ${spec.recommendedWidth}×${spec.recommendedHeight} px recommended (${spec.aspectLabel})`;
+  return `PNG or JPG · max ${maxMb} MB (auto-compressed ~600 KB for storage) · ${spec.recommendedWidth}×${spec.recommendedHeight} px recommended (${spec.aspectLabel})`;
 }

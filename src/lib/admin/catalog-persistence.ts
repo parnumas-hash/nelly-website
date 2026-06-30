@@ -1,6 +1,13 @@
 import { AdminBrand, AdminProduct, BrandCategory, AboutSection, FooterBranding, HeroBanner, HomeCollections, HomepageContent, MediaItem } from "@/types";
 import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 import {
+  stripAboutForLocalStorage,
+  stripBannerForLocalStorage,
+  stripFooterForLocalStorage,
+  stripHomeCollectionsForLocalStorage,
+  stripHomepageContentForLocalStorage,
+} from "@/lib/admin/site-content-storage";
+import {
   saveAbout,
   saveBanner,
   saveBrands,
@@ -10,10 +17,24 @@ import {
   saveHomepageContent,
   saveMedia,
   saveProducts,
+  StorageQuotaError,
 } from "@/lib/admin/storage";
 
 export function isCloudCatalogMode(): boolean {
   return isRemoteCatalogEnabled();
+}
+
+function persistSiteContentSafely<T>(saveFn: (data: T) => void, data: T): void {
+  if (isCloudCatalogMode()) {
+    try {
+      saveFn(data);
+    } catch (error) {
+      if (!(error instanceof StorageQuotaError)) throw error;
+    }
+    return;
+  }
+
+  saveFn(data);
 }
 
 export function persistProducts(products: AdminProduct[]): void {
@@ -37,21 +58,42 @@ export function persistMedia(media: MediaItem[]): void {
 }
 
 export function persistBanner(banner: HeroBanner): void {
-  saveBanner(banner);
+  persistSiteContentSafely(
+    saveBanner,
+    isCloudCatalogMode() ? stripBannerForLocalStorage(banner) : banner
+  );
 }
 
 export function persistFooter(footer: FooterBranding): void {
-  saveFooter(footer);
+  persistSiteContentSafely(
+    saveFooter,
+    isCloudCatalogMode() ? stripFooterForLocalStorage(footer) : footer
+  );
 }
 
 export function persistAbout(about: AboutSection): void {
-  saveAbout(about);
+  persistSiteContentSafely(
+    saveAbout,
+    isCloudCatalogMode() ? stripAboutForLocalStorage(about) : about
+  );
 }
 
 export function persistHomeCollections(homeCollections: HomeCollections): void {
-  saveHomeCollections(homeCollections);
+  persistSiteContentSafely(
+    saveHomeCollections,
+    isCloudCatalogMode()
+      ? stripHomeCollectionsForLocalStorage(homeCollections)
+      : homeCollections
+  );
 }
 
 export function persistHomepageContent(homepageContent: HomepageContent): void {
-  saveHomepageContent(homepageContent);
+  persistSiteContentSafely(
+    saveHomepageContent,
+    isCloudCatalogMode()
+      ? stripHomepageContentForLocalStorage(homepageContent)
+      : homepageContent
+  );
 }
+
+export { StorageQuotaError };

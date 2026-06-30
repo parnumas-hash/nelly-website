@@ -174,7 +174,7 @@ async function uploadHomeCollections(
     if (block.imageUrl?.startsWith("data:")) {
       const url = await ensurePublicUrl(
         block.imageUrl,
-        `collections/${key}.jpg`
+        `collections/${key}-${Date.now()}.jpg`
       );
       next = { ...next, [key]: { ...block, imageUrl: url } };
     }

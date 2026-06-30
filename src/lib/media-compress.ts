@@ -5,6 +5,17 @@ export const MAX_WIDTH = 1920;
 export const JPEG_QUALITY = 0.92;
 export const PRESERVE_ORIGINAL_MAX_BYTES = 1.5 * 1024 * 1024;
 
+/** Tighter limits for site content to fit browser storage (~5 MB total). */
+export const SITE_CONTENT_MAX_BYTES = 600 * 1024;
+export const SITE_CONTENT_MAX_WIDTH = 1200;
+export const SITE_CONTENT_PRESERVE_ORIGINAL_MAX_BYTES = 350 * 1024;
+
+export interface CompressImageOptions {
+  maxBytes?: number;
+  maxWidth?: number;
+  preserveOriginalMaxBytes?: number;
+}
+
 const MIN_QUALITY = 0.35;
 const MIN_DIMENSION = 480;
 
@@ -117,29 +128,37 @@ export async function ensureDataUrlMaxBytes(
   return fitImageToMaxBytes(image, width, height, maxBytes, preferPng);
 }
 
-export async function compressImageFile(file: File): Promise<string> {
+export async function compressImageFile(
+  file: File,
+  options: CompressImageOptions = {}
+): Promise<string> {
   if (!file.type.startsWith("image/")) {
     throw new Error("Please upload an image file.");
   }
+
+  const maxBytes = options.maxBytes ?? MAX_UPLOAD_BYTES;
+  const maxWidth = options.maxWidth ?? MAX_WIDTH;
+  const preserveOriginalMaxBytes =
+    options.preserveOriginalMaxBytes ?? PRESERVE_ORIGINAL_MAX_BYTES;
 
   const objectUrl = URL.createObjectURL(file);
 
   try {
     const image = await loadImage(objectUrl);
     const largestSide = Math.max(image.width, image.height);
-    const needsResize = largestSide > MAX_WIDTH;
-    const needsCompress = file.size > PRESERVE_ORIGINAL_MAX_BYTES;
+    const needsResize = largestSide > maxWidth;
+    const needsCompress = file.size > preserveOriginalMaxBytes;
 
-    if (!needsResize && !needsCompress && file.size <= MAX_UPLOAD_BYTES) {
+    if (!needsResize && !needsCompress && file.size <= maxBytes) {
       return fileToBase64(file);
     }
 
-    const scale = Math.min(1, MAX_WIDTH / largestSide);
+    const scale = Math.min(1, maxWidth / largestSide);
     const width = Math.max(1, Math.round(image.width * scale));
     const height = Math.max(1, Math.round(image.height * scale));
-    const preferPng = file.type === "image/png" && file.size <= MAX_UPLOAD_BYTES;
+    const preferPng = file.type === "image/png" && file.size <= maxBytes;
 
-    return fitImageToMaxBytes(image, width, height, MAX_UPLOAD_BYTES, preferPng);
+    return fitImageToMaxBytes(image, width, height, maxBytes, preferPng);
   } finally {
     URL.revokeObjectURL(objectUrl);
   }

@@ -1,5 +1,5 @@
 import type { Area } from "react-easy-crop";
-import { ensureDataUrlMaxBytes } from "@/lib/media-compress";
+import { ensureDataUrlMaxBytes, MAX_UPLOAD_BYTES } from "@/lib/media-compress";
 
 const MAX_OUTPUT_PX = 1200;
 
@@ -57,7 +57,8 @@ export async function imageNeedsCrop(
 export async function getCroppedImageBase64(
   imageSrc: string,
   pixelCrop: Area,
-  mimeType: string = "image/jpeg"
+  mimeType: string = "image/jpeg",
+  maxBytes: number = MAX_UPLOAD_BYTES
 ): Promise<string> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -86,5 +87,5 @@ export async function getCroppedImageBase64(
   const outputType = mimeType === "image/png" ? "image/png" : "image/jpeg";
   const quality = outputType === "image/jpeg" ? 0.92 : undefined;
   const dataUrl = canvas.toDataURL(outputType, quality);
-  return ensureDataUrlMaxBytes(dataUrl);
+  return ensureDataUrlMaxBytes(dataUrl, maxBytes);
 }

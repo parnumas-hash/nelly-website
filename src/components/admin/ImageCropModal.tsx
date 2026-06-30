@@ -5,6 +5,7 @@ import Cropper, { type Area } from "react-easy-crop";
 import "react-easy-crop/react-easy-crop.css";
 import Button from "@/components/ui/Button";
 import { getCroppedImageBase64 } from "@/lib/crop-image";
+import { SITE_CONTENT_MAX_BYTES } from "@/lib/media-compress";
 import type { ImageUploadSpec } from "@/lib/site-content-image-specs";
 import { formatUploadHint } from "@/lib/site-content-image-specs";
 
@@ -12,6 +13,7 @@ interface ImageCropModalProps {
   imageSrc: string;
   mimeType: string;
   spec: ImageUploadSpec;
+  maxOutputBytes?: number;
   onApply: (croppedBase64: string) => void;
   onCancel: () => void;
 }
@@ -20,6 +22,7 @@ export default function ImageCropModal({
   imageSrc,
   mimeType,
   spec,
+  maxOutputBytes = SITE_CONTENT_MAX_BYTES,
   onApply,
   onCancel,
 }: ImageCropModalProps) {
@@ -38,7 +41,12 @@ export default function ImageCropModal({
     setApplying(true);
     setError(null);
     try {
-      const cropped = await getCroppedImageBase64(imageSrc, croppedAreaPixels, mimeType);
+      const cropped = await getCroppedImageBase64(
+        imageSrc,
+        croppedAreaPixels,
+        mimeType,
+        maxOutputBytes
+      );
       onApply(cropped);
     } catch {
       setError("Could not crop image. Please try again.");
