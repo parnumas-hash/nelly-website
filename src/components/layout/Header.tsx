@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   Search,
@@ -30,22 +30,69 @@ const navLinks = [
   { href: "/#stores", label: "Stores" },
 ];
 
-function isNavLinkActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
-  const base = href.split("?")[0].split("#")[0];
-  if (base === "/") return pathname === "/";
-  return pathname === base || pathname.startsWith(`${base}/`);
+function isNavLinkActive(
+  pathname: string,
+  searchParams: URLSearchParams,
+  currentHash: string,
+  href: string
+): boolean {
+  const hashIndex = href.indexOf("#");
+  const beforeHash = hashIndex >= 0 ? href.slice(0, hashIndex) : href;
+  const linkHash = hashIndex >= 0 ? href.slice(hashIndex) : "";
+
+  const queryIndex = beforeHash.indexOf("?");
+  const linkPath =
+    queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash || "/";
+  const linkQuery = queryIndex >= 0 ? beforeHash.slice(queryIndex + 1) : "";
+
+  const pathMatches =
+    linkPath === "/"
+      ? pathname === "/"
+      : pathname === linkPath || pathname.startsWith(`${linkPath}/`);
+
+  if (linkHash) {
+    return pathMatches && currentHash === linkHash;
+  }
+
+  if (!pathMatches) return false;
+
+  if (linkQuery) {
+    const expected = new URLSearchParams(linkQuery);
+    for (const [key, value] of expected.entries()) {
+      if (searchParams.get(key) !== value) return false;
+    }
+    return true;
+  }
+
+  if (linkPath === "/shop") {
+    return searchParams.get("sort") !== "newest";
+  }
+
+  if (linkPath === "/" && pathname === "/") {
+    return currentHash === "";
+  }
+
+  return true;
 }
 
 export default function Header() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [currentHash, setCurrentHash] = useState("");
   const { totalItems, setIsOpen } = useCart();
   const { items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
   const isHome = pathname === "/";
+
+  useEffect(() => {
+    const updateHash = () => setCurrentHash(window.location.hash);
+    updateHash();
+    window.addEventListener("hashchange", updateHash);
+    return () => window.removeEventListener("hashchange", updateHash);
+  }, [pathname]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -92,7 +139,7 @@ export default function Header() {
                 onClick={link.href === "/" ? handleHomeNav : undefined}
                 className={cn(
                   "text-sm font-medium tracking-wide transition-colors hover:text-primary",
-                  isNavLinkActive(pathname, link.href)
+                  isNavLinkActive(pathname, searchParams, currentHash, link.href)
                     ? "text-primary"
                     : "text-neutral-600 dark:text-neutral-400"
                 )}
@@ -183,7 +230,7 @@ export default function Header() {
                       onClick={link.href === "/" ? handleHomeNav : undefined}
                       className={cn(
                         "rounded-xl px-4 py-3 text-base font-medium transition-colors",
-                        isNavLinkActive(pathname, link.href)
+                        isNavLinkActive(pathname, searchParams, currentHash, link.href)
                           ? "bg-primary/10 text-primary"
                           : "hover:bg-neutral-100 dark:hover:bg-neutral-900"
                       )}
