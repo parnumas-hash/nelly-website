@@ -164,8 +164,10 @@ function ShopContent() {
             {pageTitle}
           </h1>
           <p className="mt-3 text-neutral-500">
-            {products.length} {products.length === 1 ? "product" : "products"}
-            {activeBrand && ` from ${activeBrand.displayName}`}
+            {activeBrand
+              ? `${products.length} curated ${products.length === 1 ? "piece" : "pieces"} from ${activeBrand.displayName}`
+              : `${products.length} ${products.length === 1 ? "product" : "products"}`}
+            {!activeBrand && products.length > 0 ? " in our collection" : ""}
             {petTypeParam && ` · ${petTypeParam === "dog" ? "Dog" : "Cat"}`}
           </p>
         </div>

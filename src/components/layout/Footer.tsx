@@ -11,22 +11,19 @@ const footerLinks = {
   shop: [
     { label: "All Products", href: "/shop" },
     { label: "New Arrivals", href: "/shop?sort=newest" },
-    { label: "Best Sellers", href: "/shop" },
-    { label: "Travel with Pets", href: "/shop?category=strollers" },
-    { label: "Home Living", href: "/shop?category=beds" },
-    { label: "Eco Friendly", href: "/shop?category=eco" },
+    { label: "How to Shop", href: "/how-to-shop" },
+    { label: "First Adventure", href: "/#first-adventure" },
   ],
   company: [
     { label: "About NELLY GROUP", href: "/#about" },
     { label: "Store Locator", href: "/#stores" },
-    { label: "Careers", href: "#" },
-    { label: "Press", href: "#" },
+    { label: "Contact Us", href: "/contact" },
   ],
   support: [
-    { label: "Contact Us", href: "#" },
-    { label: "Shipping & Delivery", href: "#" },
-    { label: "Returns & Exchanges", href: "#" },
-    { label: "FAQ", href: "#" },
+    { label: "Shipping & Delivery", href: "/shipping" },
+    { label: "Returns & Exchanges", href: "/returns" },
+    { label: "FAQ", href: "/faq" },
+    { label: "How to Shop", href: "/how-to-shop" },
   ],
 };
 
@@ -168,13 +165,13 @@ export default function Footer() {
           </p>
           <div className="flex gap-6">
             <Link
-              href="#"
+              href="/privacy"
               className="text-xs text-neutral-400 transition-colors hover:text-primary"
             >
               Privacy Policy
             </Link>
             <Link
-              href="#"
+              href="/terms"
               className="text-xs text-neutral-400 transition-colors hover:text-primary"
             >
               Terms of Service
