@@ -213,6 +213,15 @@ export function getDefaultHomepageContent(): HomepageContent {
       footnote: "No spam. Unsubscribe anytime.",
       successMessage: "Thank you for subscribing.",
     },
+    firstAdventure: {
+      title: "First Adventure",
+      description:
+        "Everything a new pet parent needs — hand-picked essentials from our curated brands to start your journey with confidence.",
+      imageUrl: images.pets.puppy,
+      imageAlt: "New pet parent essentials curated by NELLY GROUP",
+      href: "/shop?sort=newest",
+      ctaLabel: "Shop Collection",
+    },
   };
 }
 
@@ -400,6 +409,26 @@ export function normalizeHomepageContent(
         data.newsletter?.successMessage?.trim() ||
         defaults.newsletter.successMessage,
     },
+    firstAdventure: {
+      ...defaults.firstAdventure,
+      ...(data.firstAdventure ?? {}),
+      imageUrl: sanitizeImageUrl(
+        data.firstAdventure?.imageUrl,
+        defaults.firstAdventure.imageUrl
+      ),
+      imageAlt:
+        data.firstAdventure?.imageAlt?.trim() ||
+        defaults.firstAdventure.imageAlt,
+      title:
+        data.firstAdventure?.title?.trim() || defaults.firstAdventure.title,
+      description:
+        data.firstAdventure?.description?.trim() ||
+        defaults.firstAdventure.description,
+      href: data.firstAdventure?.href?.trim() || defaults.firstAdventure.href,
+      ctaLabel:
+        data.firstAdventure?.ctaLabel?.trim() ||
+        defaults.firstAdventure.ctaLabel,
+    },
   };
 }
 
@@ -428,6 +457,9 @@ export function mergeHomepageContent(
     newsletter: patch.newsletter
       ? { ...current.newsletter, ...patch.newsletter }
       : current.newsletter,
+    firstAdventure: patch.firstAdventure
+      ? { ...current.firstAdventure, ...patch.firstAdventure }
+      : current.firstAdventure,
   });
 }
 

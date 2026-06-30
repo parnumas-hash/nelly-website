@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useCatalog } from "@/context/CatalogContext";
 import CollectionSection from "@/components/home/CollectionSection";
-import { images } from "@/lib/images";
+import { getDefaultHomepageContent } from "@/lib/admin/homepage-content";
 
 const STARTER_TAGS = new Set([
   "starter",
@@ -14,7 +14,9 @@ const STARTER_TAGS = new Set([
 ]);
 
 export default function FirstAdventure() {
-  const { publishedProducts, ready } = useCatalog();
+  const { publishedProducts, homepageContent, ready } = useCatalog();
+  const content = homepageContent.firstAdventure;
+  const fallback = getDefaultHomepageContent().firstAdventure;
 
   const products = useMemo(() => {
     if (!ready) return [];
@@ -33,12 +35,13 @@ export default function FirstAdventure() {
   return (
     <CollectionSection
       id="first-adventure"
-      title="First Adventure"
-      description="Everything a new pet parent needs — hand-picked essentials from our curated brands to start your journey with confidence."
-      image={images.pets.puppy}
-      imageAlt="New pet parent essentials curated by NELLY GROUP"
+      title={content.title || fallback.title}
+      description={content.description || fallback.description}
+      image={content.imageUrl || fallback.imageUrl}
+      imageAlt={content.imageAlt || fallback.imageAlt}
       products={products}
-      href="/shop?sort=newest"
+      href={content.href || fallback.href}
+      ctaLabel={content.ctaLabel || fallback.ctaLabel}
       background="gray"
       reversed
     />

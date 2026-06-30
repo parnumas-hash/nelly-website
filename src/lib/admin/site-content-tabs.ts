@@ -15,6 +15,7 @@ const tabs: SiteContentTab[] = [
     label: "Eco Friendly",
     collectionKey: "eco",
   },
+  { href: "/admin/site-content/first-adventure", label: "First Adventure" },
   { href: "/admin/site-content/footer", label: "Footer" },
   { href: "/admin/site-content/banner", label: "Hero Banner" },
   {

@@ -253,6 +253,17 @@ async function uploadHomepageContent(
     instagram: { ...next.instagram, posts: instagramPosts },
   };
 
+  if (next.firstAdventure.imageUrl?.startsWith("data:")) {
+    const url = await ensurePublicUrl(
+      next.firstAdventure.imageUrl,
+      `homepage/first-adventure-${Date.now()}.jpg`
+    );
+    next = {
+      ...next,
+      firstAdventure: { ...next.firstAdventure, imageUrl: url },
+    };
+  }
+
   return next;
 }
 

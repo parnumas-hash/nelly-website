@@ -248,6 +248,15 @@ export interface NewsletterSection {
   successMessage: string;
 }
 
+export interface FirstAdventureSection {
+  title: string;
+  description: string;
+  imageUrl: string;
+  imageAlt: string;
+  href: string;
+  ctaLabel: string;
+}
+
 export interface HomepageContent {
   brandStory: BrandStorySection;
   benefits: BenefitsSection;
@@ -255,6 +264,7 @@ export interface HomepageContent {
   instagram: InstagramGallerySection;
   storeLocator: StoreLocatorSection;
   newsletter: NewsletterSection;
+  firstAdventure: FirstAdventureSection;
 }
 
 export type HomepageContentKey = keyof HomepageContent;

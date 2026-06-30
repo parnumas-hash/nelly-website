@@ -15,6 +15,7 @@ interface CollectionSectionProps {
   imageAlt: string;
   products: Product[];
   href: string;
+  ctaLabel?: string;
   background?: "white" | "gray";
   reversed?: boolean;
 }
@@ -27,6 +28,7 @@ export default function CollectionSection({
   imageAlt,
   products,
   href,
+  ctaLabel = "Shop Collection",
   background = "white",
   reversed = false,
 }: CollectionSectionProps) {
@@ -68,7 +70,7 @@ export default function CollectionSection({
             href={href}
             className="mt-6 inline-flex items-center gap-1.5 text-[15px] font-medium text-primary transition-opacity hover:opacity-80"
           >
-            Shop Collection
+            {ctaLabel}
             <ArrowRight className="h-4 w-4" />
           </Link>
 

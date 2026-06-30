@@ -73,6 +73,10 @@ export function stripHomepageContentForLocalStorage(
         image: stripDataUrl(post.image),
       })),
     },
+    firstAdventure: {
+      ...content.firstAdventure,
+      imageUrl: stripDataUrl(content.firstAdventure.imageUrl),
+    },
   };
 }
 
