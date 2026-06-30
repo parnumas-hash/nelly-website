@@ -19,6 +19,7 @@ import {
   FooterBranding,
   AboutSection,
   HomeCollections,
+  HomepageContent,
   MediaItem,
   Product,
   ProductFilters,
@@ -41,6 +42,7 @@ import {
   loadFooter,
   loadAbout,
   loadHomeCollections,
+  loadHomepageContent,
   resetAdminStorageToDefaults,
   StorageQuotaError,
   STORAGE_QUOTA_MESSAGE,
@@ -51,6 +53,7 @@ import {
   persistFooter as writeFooterLocal,
   persistAbout as writeAboutLocal,
   persistHomeCollections as writeHomeCollectionsLocal,
+  persistHomepageContent as writeHomepageContentLocal,
   persistBrands as writeBrandsLocal,
   persistCategories as writeCategoriesLocal,
   persistMedia as writeMediaLocal,
@@ -98,6 +101,10 @@ import {
   type CatalogSyncSnapshot,
 } from "@/lib/admin/catalog-sync";
 import { normalizeCatalogSnapshot } from "@/lib/admin/catalog-normalize";
+import {
+  getDefaultHomepageContent,
+  mergeHomepageContent,
+} from "@/lib/admin/homepage-content";
 import { fetchStagedLocalRestore } from "@/lib/admin/local-restore";
 import { getDefaultCatalogSnapshot } from "@/lib/supabase/catalog-store";
 import { CATALOG_VERSION } from "@/lib/admin/storage";
@@ -118,6 +125,7 @@ interface CatalogContextType {
   footer: FooterBranding;
   about: AboutSection;
   homeCollections: HomeCollections;
+  homepageContent: HomepageContent;
   addProduct: (data: ProductFormData) => AdminProduct;
   updateProduct: (id: string, data: ProductFormData) => void;
   deleteProduct: (id: string) => void;
@@ -152,6 +160,7 @@ interface CatalogContextType {
   updateFooter: (data: Partial<FooterBranding>) => void;
   updateAbout: (data: Partial<AboutSection>) => void;
   updateHomeCollections: (data: HomeCollections) => void;
+  updateHomepageContent: (data: Partial<HomepageContent>) => void;
   getProductBySlug: (slug: string) => Product | undefined;
   getAdminProduct: (id: string) => AdminProduct | undefined;
   filterProducts: (filters: ProductFilters) => Product[];
@@ -232,6 +241,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [footer, setFooter] = useState<FooterBranding | null>(null);
   const [about, setAbout] = useState<AboutSection | null>(null);
   const [homeCollections, setHomeCollections] = useState<HomeCollections | null>(null);
+  const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
   const mediaRef = useRef<MediaItem[]>([]);
   const adminProductsRef = useRef<AdminProduct[]>([]);
@@ -241,6 +251,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const footerRef = useRef<FooterBranding | null>(null);
   const aboutRef = useRef<AboutSection | null>(null);
   const homeCollectionsRef = useRef<HomeCollections | null>(null);
+  const homepageContentRef = useRef<HomepageContent | null>(null);
 
   useEffect(() => {
     mediaRef.current = media;
@@ -274,6 +285,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     homeCollectionsRef.current = homeCollections;
   }, [homeCollections]);
 
+  useEffect(() => {
+    homepageContentRef.current = homepageContent;
+  }, [homepageContent]);
+
   const resolveBannerFallback = useCallback(
     () => (isRemoteCatalogEnabled() ? getDefaultBanner() : loadBanner()),
     []
@@ -294,6 +309,14 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       isRemoteCatalogEnabled()
         ? getDefaultHomeCollections()
         : loadHomeCollections(),
+    []
+  );
+
+  const resolveHomepageContentFallback = useCallback(
+    () =>
+      isRemoteCatalogEnabled()
+        ? getDefaultHomepageContent()
+        : loadHomepageContent(),
     []
   );
 
@@ -323,6 +346,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         about: aboutRef.current ?? resolveAboutFallback(),
         homeCollections:
           homeCollectionsRef.current ?? resolveHomeCollectionsFallback(),
+        homepageContent:
+          homepageContentRef.current ?? resolveHomepageContentFallback(),
       })
     );
   }, [
@@ -330,6 +355,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     resolveFooterFallback,
     resolveAboutFallback,
     resolveHomeCollectionsFallback,
+    resolveHomepageContentFallback,
   ]);
 
   const enrichProducts = useCallback(
@@ -357,6 +383,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       setFooter(normalized.footer);
       setAbout(normalized.about);
       setHomeCollections(normalized.homeCollections);
+      setHomepageContent(normalized.homepageContent);
     },
     [enrichProducts]
   );
@@ -405,6 +432,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
           setFooter(snapshot.footer);
           setAbout(snapshot.about);
           setHomeCollections(snapshot.homeCollections);
+          setHomepageContent(snapshot.homepageContent);
           setStorageError(null);
           setReady(true);
           return;
@@ -436,6 +464,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setFooter(catalog.footer);
         setAbout(catalog.about);
         setHomeCollections(catalog.homeCollections);
+        setHomepageContent(catalog.homepageContent);
       } catch (error) {
         if (error instanceof StorageQuotaError) {
           setStorageError(error.message);
@@ -453,6 +482,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setFooter(loadFooter());
         setAbout(loadAbout());
         setHomeCollections(loadHomeCollections());
+        setHomepageContent(loadHomepageContent());
       } finally {
         if (!cancelled) setReady(true);
       }
@@ -940,6 +970,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setFooter(snapshot.footer);
         setAbout(snapshot.about);
         setHomeCollections(snapshot.homeCollections);
+        setHomepageContent(snapshot.homepageContent);
       }
       setStorageError(null);
       syncRemoteCatalog();
@@ -962,6 +993,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       footer: footer ?? resolveFooterFallback(),
       about: about ?? resolveAboutFallback(),
       homeCollections: homeCollections ?? resolveHomeCollectionsFallback(),
+      homepageContent: homepageContent ?? resolveHomepageContentFallback(),
     });
     downloadCatalogBackup(backup);
     setStorageError(null);
@@ -972,10 +1004,12 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     footer,
     about,
     homeCollections,
+    homepageContent,
     resolveBannerFallback,
     resolveFooterFallback,
     resolveAboutFallback,
     resolveHomeCollectionsFallback,
+    resolveHomepageContentFallback,
   ]);
 
   const restoreCatalogBackup = useCallback(
@@ -1001,6 +1035,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setFooter(snapshot.footer);
         setAbout(snapshot.about);
         setHomeCollections(snapshot.homeCollections);
+        setHomepageContent(snapshot.homepageContent);
         setStorageError(null);
         return getCatalogBackupSummary(backup);
       } catch (error) {
@@ -1086,6 +1121,30 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [syncRemoteCatalog]);
+
+  const updateHomepageContent = useCallback(
+    (data: Partial<HomepageContent>) => {
+      setHomepageContent((prev) => {
+        const next = mergeHomepageContent(
+          prev ?? resolveHomepageContentFallback(),
+          data
+        );
+        try {
+          writeHomepageContentLocal(next);
+          setStorageError(null);
+          syncRemoteCatalog();
+        } catch (error) {
+          if (error instanceof StorageQuotaError) {
+            setStorageError(error.message);
+          } else {
+            setStorageError("Could not save homepage content.");
+          }
+        }
+        return next;
+      });
+    },
+    [syncRemoteCatalog, resolveHomepageContentFallback]
+  );
 
   const getProductBySlug = useCallback(
     (slug: string) => publishedProducts.find((p) => p.slug === slug),
@@ -1216,6 +1275,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     footer: footer ?? resolveFooterFallback(),
     about: about ?? resolveAboutFallback(),
     homeCollections: homeCollections ?? resolveHomeCollectionsFallback(),
+    homepageContent: homepageContent ?? resolveHomepageContentFallback(),
     addProduct,
     updateProduct,
     deleteProduct,
@@ -1243,6 +1303,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     updateFooter,
     updateAbout,
     updateHomeCollections,
+    updateHomepageContent,
     getProductBySlug,
     getAdminProduct,
     filterProducts,

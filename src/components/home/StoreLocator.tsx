@@ -1,19 +1,24 @@
+"use client";
+
 import { MapPin, Clock, Phone, ExternalLink } from "lucide-react";
 import Section from "@/components/ui/Section";
 import SectionHeader from "@/components/ui/SectionHeader";
-import { stores } from "@/lib/stores";
+import { useCatalog } from "@/context/CatalogContext";
 
 export default function StoreLocator() {
+  const { homepageContent } = useCatalog();
+  const content = homepageContent.storeLocator;
+
   return (
     <Section id="stores" background="white" ariaLabel="Store locator">
       <SectionHeader
-        title="Store Locator"
-        description="Experience NELLY GROUP in person at our premium retail locations across Bangkok."
+        title={content.title}
+        description={content.description}
         align="center"
       />
 
       <div className="grid gap-5 md:grid-cols-3">
-        {stores.map((store) => (
+        {content.stores.map((store) => (
           <article
             key={store.id}
             className="rounded-2xl border border-neutral-200/80 bg-white p-6 transition-shadow hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"

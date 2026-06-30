@@ -6,8 +6,11 @@ import { Check } from "lucide-react";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { useCatalog } from "@/context/CatalogContext";
 
 export default function Newsletter() {
+  const { homepageContent } = useCatalog();
+  const content = homepageContent.newsletter;
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const prefersReducedMotion = useReducedMotion();
@@ -26,11 +29,10 @@ export default function Newsletter() {
         className="mx-auto max-w-xl rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-14 text-center dark:border-neutral-800 dark:bg-neutral-900/50 md:px-12"
       >
         <h2 className="font-display text-[32px] font-bold tracking-tight text-neutral-900 dark:text-white md:text-[40px]">
-          Newsletter
+          {content.title}
         </h2>
         <p className="mt-4 text-[15px] leading-relaxed text-neutral-500">
-          New collections, exclusive offers, and pet lifestyle inspiration —
-          curated for you.
+          {content.description}
         </p>
 
         {submitted ? (
@@ -39,7 +41,7 @@ export default function Newsletter() {
             role="status"
           >
             <Check className="h-5 w-5 text-primary" aria-hidden />
-            <span className="text-[15px] font-medium">Thank you for subscribing.</span>
+            <span className="text-[15px] font-medium">{content.successMessage}</span>
           </div>
         ) : (
           <form
@@ -49,7 +51,7 @@ export default function Newsletter() {
             <Input
               id="newsletter-email"
               type="email"
-              placeholder="Email address"
+              placeholder={content.placeholder}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -57,14 +59,12 @@ export default function Newsletter() {
               className="flex-1 bg-white dark:bg-neutral-950"
             />
             <Button type="submit" disabled={!email.trim()}>
-              Subscribe
+              {content.buttonLabel}
             </Button>
           </form>
         )}
 
-        <p className="mt-4 text-xs text-neutral-400">
-          No spam. Unsubscribe anytime.
-        </p>
+        <p className="mt-4 text-xs text-neutral-400">{content.footnote}</p>
       </motion.div>
     </Section>
   );

@@ -9,7 +9,8 @@ import {
   getDefaultProducts,
 } from "@/lib/admin/storage";
 import { normalizeBrandCategories } from "@/lib/brand-categories";
-import { AboutSection, FooterBranding, HeroBanner, HomeCollections } from "@/types";
+import { AboutSection, FooterBranding, HeroBanner, HomeCollections, HomepageContent } from "@/types";
+import { getDefaultHomepageContent, normalizeHomepageContent } from "@/lib/admin/homepage-content";
 
 export function normalizeCatalogSnapshot(
   snapshot: Partial<CatalogSyncSnapshot> | null | undefined
@@ -58,5 +59,6 @@ export function normalizeCatalogSnapshot(
         ...(snapshot?.homeCollections?.eco ?? {}),
       },
     } as HomeCollections,
+    homepageContent: normalizeHomepageContent(snapshot?.homepageContent),
   };
 }

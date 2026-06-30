@@ -8,6 +8,7 @@ import {
   HomeCollectionKey,
   HomeCollections,
   MediaItem,
+  HomepageContent,
 } from "@/types";
 import {
   CATALOG_VERSION,
@@ -18,6 +19,7 @@ import {
   getDefaultHomeCollections,
   getDefaultProducts,
 } from "@/lib/admin/storage";
+import { normalizeHomepageContent, getDefaultHomepageContent } from "@/lib/admin/homepage-content";
 import { stripProductsForStorage } from "@/lib/media-library";
 import { normalizeBrandCategories, sortBrandsAlphabetically } from "@/lib/brand-categories";
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin";
@@ -33,6 +35,7 @@ export interface CatalogSnapshot {
   footer: FooterBranding;
   about: AboutSection;
   homeCollections: HomeCollections;
+  homepageContent: HomepageContent;
 }
 
 interface CatalogRow {
@@ -45,6 +48,7 @@ interface CatalogRow {
   footer?: FooterBranding;
   about?: AboutSection;
   home_collections?: HomeCollections;
+  homepage_content?: HomepageContent;
 }
 
 function defaultSnapshot(): CatalogSnapshot {
@@ -58,6 +62,7 @@ function defaultSnapshot(): CatalogSnapshot {
     footer: getDefaultFooter(),
     about: getDefaultAbout(),
     homeCollections: getDefaultHomeCollections(),
+    homepageContent: getDefaultHomepageContent(),
   };
 }
 
@@ -152,6 +157,9 @@ export async function loadCatalogFromDb(): Promise<CatalogSnapshot | null> {
     about: (row.about as AboutSection) ?? getDefaultAbout(),
     homeCollections:
       (row.home_collections as HomeCollections) ?? getDefaultHomeCollections(),
+    homepageContent: normalizeHomepageContent(
+      row.homepage_content as HomepageContent | undefined
+    ),
   };
 }
 
@@ -199,6 +207,55 @@ async function uploadBannerPoster(banner: HeroBanner): Promise<HeroBanner> {
   return banner;
 }
 
+async function uploadHomepageContent(
+  homepageContent: HomepageContent
+): Promise<HomepageContent> {
+  let next = { ...homepageContent };
+
+  if (next.brandStory.imageUrl?.startsWith("data:")) {
+    const url = await ensurePublicUrl(
+      next.brandStory.imageUrl,
+      "homepage/brand-story.jpg"
+    );
+    next = {
+      ...next,
+      brandStory: { ...next.brandStory, imageUrl: url },
+    };
+  }
+
+  const testimonialItems = await Promise.all(
+    next.testimonials.items.map(async (item, index) => {
+      if (!item.avatar?.startsWith("data:")) return item;
+      const url = await ensurePublicUrl(
+        item.avatar,
+        `homepage/testimonial-${item.id || index}.jpg`
+      );
+      return { ...item, avatar: url };
+    })
+  );
+  next = {
+    ...next,
+    testimonials: { ...next.testimonials, items: testimonialItems },
+  };
+
+  const instagramPosts = await Promise.all(
+    next.instagram.posts.map(async (post, index) => {
+      if (!post.image?.startsWith("data:")) return post;
+      const url = await ensurePublicUrl(
+        post.image,
+        `homepage/instagram-${post.id || index}.jpg`
+      );
+      return { ...post, image: url };
+    })
+  );
+  next = {
+    ...next,
+    instagram: { ...next.instagram, posts: instagramPosts },
+  };
+
+  return next;
+}
+
 export async function saveCatalogToDb(
   snapshot: CatalogSnapshot
 ): Promise<CatalogSnapshot> {
@@ -213,6 +270,7 @@ export async function saveCatalogToDb(
   const footer = await uploadFooterLogo(snapshot.footer);
   const about = await uploadAboutImage(snapshot.about);
   const homeCollections = await uploadHomeCollections(snapshot.homeCollections);
+  const homepageContent = await uploadHomepageContent(snapshot.homepageContent);
 
   const products = stripProductsForStorage(snapshot.products);
 
@@ -228,6 +286,7 @@ export async function saveCatalogToDb(
     footer,
     about,
     home_collections: homeCollections,
+    homepage_content: homepageContent,
     updated_at: new Date().toISOString(),
   });
 
@@ -245,6 +304,7 @@ export async function saveCatalogToDb(
     footer,
     about,
     homeCollections,
+    homepageContent,
   };
 }
 

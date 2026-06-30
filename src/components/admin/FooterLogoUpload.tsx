@@ -3,9 +3,15 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { ImageIcon, Upload, X } from "lucide-react";
+import ImageCropModal from "@/components/admin/ImageCropModal";
 import { readBrandImageFile } from "@/lib/brand-image";
-import { BRAND_LOGO_HEIGHT, BRAND_LOGO_WIDTH } from "@/lib/brand-assets";
+import { imageNeedsCrop } from "@/lib/crop-image";
 import { shouldUnoptimize } from "@/lib/image-utils";
+import {
+  formatUploadHint,
+  SITE_IMAGE_SPECS,
+  type ImageUploadSpec,
+} from "@/lib/site-content-image-specs";
 import { cn } from "@/lib/utils";
 
 interface FooterLogoUploadProps {
@@ -16,6 +22,8 @@ interface FooterLogoUploadProps {
   aspectClass?: string;
   maxWidthClass?: string;
   imagePaddingClass?: string;
+  /** When set, shows recommended size and opens crop if aspect does not match. */
+  imageSpec?: ImageUploadSpec;
 }
 
 export default function FooterLogoUpload({
@@ -26,24 +34,53 @@ export default function FooterLogoUpload({
   aspectClass = "aspect-square",
   maxWidthClass = "max-w-[280px]",
   imagePaddingClass = "p-6",
+  imageSpec = SITE_IMAGE_SPECS.footerLogo,
 }: FooterLogoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingCrop, setPendingCrop] = useState<{
+    src: string;
+    mimeType: string;
+  } | null>(null);
+
+  const previewObjectFit = imageSpec?.previewObjectFit ?? "contain";
+  const uploadHint = imageSpec
+    ? formatUploadHint(imageSpec)
+    : "PNG or JPG · up to 5 MB";
+
+  const closeCropModal = () => {
+    setPendingCrop(null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  const handleCropApply = (croppedBase64: string) => {
+    onChange(croppedBase64);
+    closeCropModal();
+  };
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     setError(null);
     setUploading(true);
+    let openedCropModal = false;
     try {
       const dataUrl = await readBrandImageFile(file);
+      const mimeType = file.type || "image/jpeg";
+
+      if (imageSpec && (await imageNeedsCrop(dataUrl, imageSpec.aspect))) {
+        setPendingCrop({ src: dataUrl, mimeType });
+        openedCropModal = true;
+        return;
+      }
+
       onChange(dataUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
+      if (!openedCropModal && inputRef.current) inputRef.current.value = "";
     }
   };
 
@@ -94,22 +131,25 @@ export default function FooterLogoUpload({
           <>
             <Image
               src={logoUrl}
-              alt="Footer logo preview"
+              alt="Image preview"
               fill
-              className={cn("object-contain", imagePaddingClass)}
+              className={cn(
+                previewObjectFit === "cover" ? "object-cover" : "object-contain",
+                imagePaddingClass
+              )}
               unoptimized={shouldUnoptimize(logoUrl)}
             />
             <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-opacity group-hover:bg-black/40 group-hover:opacity-100">
               <span className="flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-medium text-neutral-900">
                 <Upload className="h-3.5 w-3.5" />
-                {uploading ? "Uploading…" : "Change logo"}
+                {uploading ? "Uploading…" : "Change image"}
               </span>
             </div>
             <button
               type="button"
               onClick={handleRemove}
               className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
-              aria-label="Remove logo"
+              aria-label="Remove image"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -122,12 +162,14 @@ export default function FooterLogoUpload({
             <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300">
               {uploading ? "Processing…" : uploadLabel}
             </p>
-            <p className="mt-1 text-xs text-neutral-400">
-              PNG or JPG · up to 5 MB · {BRAND_LOGO_WIDTH}×{BRAND_LOGO_HEIGHT} recommended
-            </p>
+            <p className="mt-1 text-xs text-neutral-400">{uploadHint}</p>
           </div>
         )}
       </div>
+
+      {imageSpec && logoUrl && (
+        <p className="mt-2 text-xs text-neutral-400">{uploadHint}</p>
+      )}
 
       <input
         ref={inputRef}
@@ -138,6 +180,16 @@ export default function FooterLogoUpload({
       />
 
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+
+      {pendingCrop && imageSpec && (
+        <ImageCropModal
+          imageSrc={pendingCrop.src}
+          mimeType={pendingCrop.mimeType}
+          spec={imageSpec}
+          onApply={handleCropApply}
+          onCancel={closeCropModal}
+        />
+      )}
     </div>
   );
 }

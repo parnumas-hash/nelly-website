@@ -11,7 +11,7 @@ export default function SiteContentLayout({
         Site Content
       </h1>
       <p className="mb-6 text-neutral-500">
-        Manage the homepage hero banner, footer, About Us, and collection sections.
+        Manage homepage sections, footer, collections, and trust content from one place.
       </p>
       <SiteContentNav />
       {children}

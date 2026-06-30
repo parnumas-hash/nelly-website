@@ -3,15 +3,23 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { ImageIcon, Upload, X } from "lucide-react";
+import ImageCropModal from "@/components/admin/ImageCropModal";
 import { readBannerImageFile } from "@/lib/banner-image";
+import { imageNeedsCrop } from "@/lib/crop-image";
 import { HERO_BANNER_ASPECT } from "@/lib/brand-assets";
 import { shouldUnoptimizeBanner } from "@/lib/image-utils";
+import {
+  formatUploadHint,
+  SITE_IMAGE_SPECS,
+} from "@/lib/site-content-image-specs";
 import { cn } from "@/lib/utils";
 
 interface BannerImageUploadProps {
   posterUrl: string;
   onChange: (posterUrl: string) => void;
 }
+
+const bannerSpec = SITE_IMAGE_SPECS.heroBanner;
 
 export default function BannerImageUpload({
   posterUrl,
@@ -21,19 +29,44 @@ export default function BannerImageUpload({
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingCrop, setPendingCrop] = useState<{
+    src: string;
+    mimeType: string;
+  } | null>(null);
+
+  const uploadHint = formatUploadHint(bannerSpec);
+
+  const closeCropModal = () => {
+    setPendingCrop(null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  const handleCropApply = (croppedBase64: string) => {
+    onChange(croppedBase64);
+    closeCropModal();
+  };
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     setError(null);
     setUploading(true);
+    let openedCropModal = false;
     try {
       const dataUrl = await readBannerImageFile(file);
+      const mimeType = file.type || "image/jpeg";
+
+      if (await imageNeedsCrop(dataUrl, bannerSpec.aspect)) {
+        setPendingCrop({ src: dataUrl, mimeType });
+        openedCropModal = true;
+        return;
+      }
+
       onChange(dataUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
+      if (!openedCropModal && inputRef.current) inputRef.current.value = "";
     }
   };
 
@@ -111,12 +144,14 @@ export default function BannerImageUpload({
             <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300">
               {uploading ? "Processing image…" : "Upload banner image"}
             </p>
-            <p className="mt-1 text-xs text-neutral-400">
-              Wide 16:9 · JPG or PNG up to 5 MB
-            </p>
+            <p className="mt-1 text-xs text-neutral-400">{uploadHint}</p>
           </div>
         )}
       </div>
+
+      {posterUrl && (
+        <p className="mt-2 text-xs text-neutral-400">{uploadHint}</p>
+      )}
 
       <input
         ref={inputRef}
@@ -127,6 +162,16 @@ export default function BannerImageUpload({
       />
 
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+
+      {pendingCrop && (
+        <ImageCropModal
+          imageSrc={pendingCrop.src}
+          mimeType={pendingCrop.mimeType}
+          spec={bannerSpec}
+          onApply={handleCropApply}
+          onCancel={closeCropModal}
+        />
+      )}
     </div>
   );
 }

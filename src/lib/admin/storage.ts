@@ -8,6 +8,7 @@ import {
   HomeCollection,
   HomeCollectionKey,
   HomeCollections,
+  HomepageContent,
   LegacySeedProduct,
   MediaItem,
   Product,
@@ -30,6 +31,10 @@ import {
   stripProductsForStorage,
 } from "@/lib/media-library";
 import {
+  getDefaultHomepageContent,
+  normalizeHomepageContent,
+} from "@/lib/admin/homepage-content";
+import {
   getSeedImagesForProduct,
   repairAdminProduct,
   sanitizeImageList,
@@ -45,6 +50,7 @@ export const STORAGE_KEYS = {
   footer: "nelly-admin-footer",
   about: "nelly-admin-about",
   homeCollections: "nelly-admin-home-collections",
+  homepageContent: "nelly-admin-homepage-content",
   catalogVersion: "nelly-catalog-version",
 } as const;
 
@@ -715,6 +721,15 @@ export function saveHomeCollections(homeCollections: HomeCollections): void {
   write(STORAGE_KEYS.homeCollections, homeCollections);
 }
 
+export function loadHomepageContent(): HomepageContent {
+  const stored = read<HomepageContent>(STORAGE_KEYS.homepageContent);
+  return normalizeHomepageContent(stored);
+}
+
+export function saveHomepageContent(content: HomepageContent): void {
+  write(STORAGE_KEYS.homepageContent, normalizeHomepageContent(content));
+}
+
 export function saveBanner(banner: HeroBanner): void {
   write(STORAGE_KEYS.banner, banner);
 }
@@ -757,6 +772,7 @@ export function resetAdminStorageToDefaults(): {
   footer: FooterBranding;
   about: AboutSection;
   homeCollections: HomeCollections;
+  homepageContent: HomepageContent;
 } {
   clearAdminStorage();
   const brands = getDefaultBrands();
@@ -767,6 +783,7 @@ export function resetAdminStorageToDefaults(): {
   const footer = getDefaultFooter();
   const about = getDefaultAbout();
   const homeCollections = getDefaultHomeCollections();
+  const homepageContent = getDefaultHomepageContent();
   write(STORAGE_KEYS.catalogVersion, CATALOG_VERSION);
   saveProducts(products);
   saveBrands(brands);
@@ -776,7 +793,8 @@ export function resetAdminStorageToDefaults(): {
   saveFooter(footer);
   saveAbout(about);
   saveHomeCollections(homeCollections);
-  return { products, brands, categories, media, banner, footer, about, homeCollections };
+  saveHomepageContent(homepageContent);
+  return { products, brands, categories, media, banner, footer, about, homeCollections, homepageContent };
 }
 
 export function initializeCatalogFromStorage(): {
@@ -788,6 +806,7 @@ export function initializeCatalogFromStorage(): {
   footer: FooterBranding;
   about: AboutSection;
   homeCollections: HomeCollections;
+  homepageContent: HomepageContent;
   migrated: boolean;
 } {
   let media = loadMedia();
@@ -797,6 +816,7 @@ export function initializeCatalogFromStorage(): {
   const footer = loadFooter();
   const about = loadAbout();
   const homeCollections = loadHomeCollections();
+  const homepageContent = loadHomepageContent();
   const version = read<number>(STORAGE_KEYS.catalogVersion);
   const stored = read<unknown[]>(STORAGE_KEYS.products);
   const defaults = getDefaultProducts();
@@ -865,5 +885,5 @@ export function initializeCatalogFromStorage(): {
     }
   }
 
-  return { products: enriched, brands, categories, media, banner, footer, about, homeCollections, migrated };
+  return { products: enriched, brands, categories, media, banner, footer, about, homeCollections, homepageContent, migrated };
 }

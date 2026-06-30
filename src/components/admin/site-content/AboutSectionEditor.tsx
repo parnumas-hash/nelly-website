@@ -10,6 +10,7 @@ import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultAbout } from "@/lib/admin/storage";
 import { BRAND_LOGO_HEIGHT, BRAND_LOGO_WIDTH } from "@/lib/brand-assets";
 import { shouldUnoptimize } from "@/lib/image-utils";
+import { SITE_IMAGE_SPECS } from "@/lib/site-content-image-specs";
 
 export default function AboutSectionEditor() {
   const { about, updateAbout, ready } = useCatalog();
@@ -37,6 +38,7 @@ export default function AboutSectionEditor() {
           aspectClass="aspect-[4/5]"
           maxWidthClass="max-w-full"
           imagePaddingClass="p-8 md:p-12"
+          imageSpec={SITE_IMAGE_SPECS.aboutPortrait}
           logoUrl={form.imageUrl}
           onChange={(imageUrl) => setForm({ ...form, imageUrl })}
         />

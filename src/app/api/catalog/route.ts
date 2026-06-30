@@ -39,6 +39,7 @@ export async function GET() {
       footer: normalized.footer,
       about: normalized.about,
       homeCollections: normalized.homeCollections,
+      homepageContent: normalized.homepageContent,
     });
   } catch (error) {
     const message =
@@ -74,6 +75,7 @@ export async function PUT(request: Request) {
       footer: body.footer ?? defaults.footer,
       about: body.about ?? defaults.about,
       homeCollections: body.homeCollections ?? defaults.homeCollections,
+      homepageContent: body.homepageContent ?? defaults.homepageContent,
     };
 
     const saved = await saveCatalogToDb(snapshot);
@@ -96,6 +98,7 @@ export async function PUT(request: Request) {
       footer: saved.footer,
       about: saved.about,
       homeCollections: saved.homeCollections,
+      homepageContent: saved.homepageContent,
     });
   } catch (error) {
     const message =

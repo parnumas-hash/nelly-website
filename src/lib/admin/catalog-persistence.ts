@@ -1,4 +1,4 @@
-import { AdminBrand, AdminProduct, BrandCategory, AboutSection, FooterBranding, HeroBanner, HomeCollections, MediaItem } from "@/types";
+import { AdminBrand, AdminProduct, BrandCategory, AboutSection, FooterBranding, HeroBanner, HomeCollections, HomepageContent, MediaItem } from "@/types";
 import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 import {
   saveAbout,
@@ -7,6 +7,7 @@ import {
   saveCategories,
   saveFooter,
   saveHomeCollections,
+  saveHomepageContent,
   saveMedia,
   saveProducts,
 } from "@/lib/admin/storage";
@@ -53,4 +54,9 @@ export function persistAbout(about: AboutSection): void {
 export function persistHomeCollections(homeCollections: HomeCollections): void {
   if (isCloudCatalogMode()) return;
   saveHomeCollections(homeCollections);
+}
+
+export function persistHomepageContent(homepageContent: HomepageContent): void {
+  if (isCloudCatalogMode()) return;
+  saveHomepageContent(homepageContent);
 }

@@ -1,9 +1,14 @@
-import { testimonials } from "@/lib/testimonials";
+"use client";
+
 import Section from "@/components/ui/Section";
 import SectionHeader from "@/components/ui/SectionHeader";
 import ReviewCard from "@/components/ui/ReviewCard";
+import { useCatalog } from "@/context/CatalogContext";
 
 export default function Testimonials() {
+  const { homepageContent } = useCatalog();
+  const content = homepageContent.testimonials;
+
   return (
     <Section
       id="reviews"
@@ -11,14 +16,14 @@ export default function Testimonials() {
       ariaLabel="Customer reviews"
     >
       <SectionHeader
-        eyebrow="Testimonials"
-        title="Loved by Pet Parents"
-        description="Join thousands of discerning pet owners who trust NELLY GROUP for their companion's lifestyle."
+        eyebrow={content.eyebrow}
+        title={content.title}
+        description={content.description}
         align="center"
       />
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-        {testimonials.map((testimonial, i) => (
+        {content.items.map((testimonial, i) => (
           <ReviewCard key={testimonial.id} testimonial={testimonial} index={i} />
         ))}
       </div>

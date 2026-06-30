@@ -9,6 +9,7 @@ import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultHomeCollections } from "@/lib/admin/storage";
 import { getCollectionTab } from "@/lib/admin/site-content-tabs";
 import { shouldUnoptimize } from "@/lib/image-utils";
+import { SITE_IMAGE_SPECS } from "@/lib/site-content-image-specs";
 import type { HomeCollection, HomeCollectionKey, HomeCollections } from "@/types";
 
 interface CollectionSectionEditorProps {
@@ -59,6 +60,7 @@ export default function CollectionSectionEditor({
           aspectClass="aspect-[5/4]"
           maxWidthClass="max-w-full"
           imagePaddingClass="p-0"
+          imageSpec={SITE_IMAGE_SPECS.collectionLandscape}
           logoUrl={block.imageUrl}
           onChange={(imageUrl) =>
             setForm((prev) =>

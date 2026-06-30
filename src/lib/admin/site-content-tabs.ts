@@ -8,6 +8,8 @@ export interface SiteContentTab {
 
 const tabs: SiteContentTab[] = [
   { href: "/admin/site-content/about", label: "About Us" },
+  { href: "/admin/site-content/benefits", label: "Benefits" },
+  { href: "/admin/site-content/brand-story", label: "Brand Story" },
   {
     href: "/admin/site-content/eco-friendly",
     label: "Eco Friendly",
@@ -20,6 +22,10 @@ const tabs: SiteContentTab[] = [
     label: "Home Living",
     collectionKey: "home",
   },
+  { href: "/admin/site-content/instagram", label: "Instagram" },
+  { href: "/admin/site-content/newsletter", label: "Newsletter" },
+  { href: "/admin/site-content/store-locator", label: "Store Locator" },
+  { href: "/admin/site-content/testimonials", label: "Testimonials" },
   {
     href: "/admin/site-content/travel-with-pets",
     label: "Travel with Pets",

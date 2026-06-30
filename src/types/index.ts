@@ -167,6 +167,98 @@ export interface Testimonial {
   avatar: string;
 }
 
+export type BenefitIconName =
+  | "award"
+  | "shield"
+  | "truck"
+  | "headphones"
+  | "heart"
+  | "star"
+  | "sparkles"
+  | "leaf";
+
+export interface BenefitItem {
+  icon: BenefitIconName;
+  title: string;
+  description: string;
+}
+
+export interface BrandStorySection {
+  imageUrl: string;
+  imageAlt: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  body: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
+export interface BenefitsSection {
+  eyebrow: string;
+  title: string;
+  description: string;
+  items: BenefitItem[];
+}
+
+export interface TestimonialsSection {
+  eyebrow: string;
+  title: string;
+  description: string;
+  items: Testimonial[];
+}
+
+export interface InstagramPost {
+  id: string;
+  image: string;
+  alt: string;
+  href: string;
+}
+
+export interface InstagramGallerySection {
+  title: string;
+  description: string;
+  profileHref: string;
+  profileLabel: string;
+  posts: InstagramPost[];
+}
+
+export interface StoreLocation {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  hours: string;
+  phone: string;
+  mapUrl: string;
+}
+
+export interface StoreLocatorSection {
+  title: string;
+  description: string;
+  stores: StoreLocation[];
+}
+
+export interface NewsletterSection {
+  title: string;
+  description: string;
+  placeholder: string;
+  buttonLabel: string;
+  footnote: string;
+  successMessage: string;
+}
+
+export interface HomepageContent {
+  brandStory: BrandStorySection;
+  benefits: BenefitsSection;
+  testimonials: TestimonialsSection;
+  instagram: InstagramGallerySection;
+  storeLocator: StoreLocatorSection;
+  newsletter: NewsletterSection;
+}
+
+export type HomepageContentKey = keyof HomepageContent;
+
 export interface CartItem {
   product: Product;
   /** Present on new cart items; legacy items may omit this */
