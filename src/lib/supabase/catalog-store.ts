@@ -9,6 +9,7 @@ import {
   HomeCollections,
   MediaItem,
   HomepageContent,
+  SitePagesContent,
 } from "@/types";
 import {
   CATALOG_VERSION,
@@ -20,6 +21,10 @@ import {
   getDefaultProducts,
 } from "@/lib/admin/storage";
 import { normalizeHomepageContent, getDefaultHomepageContent } from "@/lib/admin/homepage-content";
+import {
+  getDefaultSitePagesContent,
+  normalizeSitePagesContent,
+} from "@/lib/admin/site-pages-content";
 import { stripProductsForStorage } from "@/lib/media-library";
 import { normalizeBrandCategories, sortBrandsAlphabetically } from "@/lib/brand-categories";
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin";
@@ -36,6 +41,7 @@ export interface CatalogSnapshot {
   about: AboutSection;
   homeCollections: HomeCollections;
   homepageContent: HomepageContent;
+  sitePages: SitePagesContent;
 }
 
 interface CatalogRow {
@@ -49,6 +55,7 @@ interface CatalogRow {
   about?: AboutSection;
   home_collections?: HomeCollections;
   homepage_content?: HomepageContent;
+  site_pages?: SitePagesContent;
 }
 
 function defaultSnapshot(): CatalogSnapshot {
@@ -63,6 +70,7 @@ function defaultSnapshot(): CatalogSnapshot {
     about: getDefaultAbout(),
     homeCollections: getDefaultHomeCollections(),
     homepageContent: getDefaultHomepageContent(),
+    sitePages: getDefaultSitePagesContent(),
   };
 }
 
@@ -159,6 +167,9 @@ export async function loadCatalogFromDb(): Promise<CatalogSnapshot | null> {
       (row.home_collections as HomeCollections) ?? getDefaultHomeCollections(),
     homepageContent: normalizeHomepageContent(
       row.homepage_content as HomepageContent | undefined
+    ),
+    sitePages: normalizeSitePagesContent(
+      row.site_pages as SitePagesContent | undefined
     ),
   };
 }
@@ -298,6 +309,7 @@ export async function saveCatalogToDb(
     about,
     home_collections: homeCollections,
     homepage_content: homepageContent,
+    site_pages: snapshot.sitePages,
     updated_at: new Date().toISOString(),
   });
 
@@ -316,6 +328,7 @@ export async function saveCatalogToDb(
     about,
     homeCollections,
     homepageContent,
+    sitePages: snapshot.sitePages,
   };
 }
 

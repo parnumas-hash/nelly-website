@@ -1,24 +1,19 @@
+import type {
+  FaqItem,
+  HowToShopStep,
+  SitePageSection,
+} from "@/types";
 import { formatPrice, FREE_SHIPPING_MIN, STANDARD_SHIPPING_FEE } from "@/lib/utils";
 
-export interface SitePageSection {
-  heading?: string;
-  paragraphs: string[];
-  bullets?: string[];
-}
-
-export interface FaqItem {
-  question: string;
-  answer: string;
-}
-
-export interface HowToShopStep {
-  step: number;
-  title: string;
-  description: string;
-}
+export type { FaqItem, HowToShopStep, SitePageSection };
 
 export const CONTACT_EMAIL = "hello@nellygroup.com";
 export const CONTACT_LINE = "@nellygroup";
+
+export {
+  getDefaultSitePagesContent,
+  normalizeSitePagesContent,
+} from "@/lib/admin/site-pages-content";
 
 export const shippingPage = {
   title: "Shipping & Delivery",

@@ -1,20 +1,14 @@
 import type { Metadata } from "next";
-import ContentPageLayout from "@/components/content/ContentPageLayout";
-import ContentSections from "@/components/content/ContentSections";
-import { returnsPage } from "@/lib/site-pages";
+import ReturnsPageClient from "@/components/content/ReturnsPageClient";
+import { getDefaultSitePagesContent } from "@/lib/admin/site-pages-content";
+
+const defaults = getDefaultSitePagesContent();
 
 export const metadata: Metadata = {
-  title: returnsPage.title,
-  description: returnsPage.description,
+  title: defaults.returns.title,
+  description: defaults.returns.description,
 };
 
 export default function ReturnsPage() {
-  return (
-    <ContentPageLayout
-      title={returnsPage.title}
-      description={returnsPage.description}
-    >
-      <ContentSections sections={returnsPage.sections} />
-    </ContentPageLayout>
-  );
+  return <ReturnsPageClient />;
 }

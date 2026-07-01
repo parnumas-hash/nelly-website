@@ -1,4 +1,4 @@
-import { AdminBrand, AdminProduct, BrandCategory, AboutSection, FooterBranding, HeroBanner, HomeCollections, HomepageContent, MediaItem } from "@/types";
+import { AdminBrand, AdminProduct, BrandCategory, AboutSection, FooterBranding, HeroBanner, HomeCollections, HomepageContent, SitePagesContent, MediaItem } from "@/types";
 import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 import {
   stripAboutForLocalStorage,
@@ -15,6 +15,7 @@ import {
   saveFooter,
   saveHomeCollections,
   saveHomepageContent,
+  saveSitePages,
   saveMedia,
   saveProducts,
   StorageQuotaError,
@@ -94,6 +95,10 @@ export function persistHomepageContent(homepageContent: HomepageContent): void {
       ? stripHomepageContentForLocalStorage(homepageContent)
       : homepageContent
   );
+}
+
+export function persistSitePages(sitePages: SitePagesContent): void {
+  persistSiteContentSafely(saveSitePages, sitePages);
 }
 
 export { StorageQuotaError };

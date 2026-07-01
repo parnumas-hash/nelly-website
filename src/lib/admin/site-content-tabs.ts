@@ -27,6 +27,7 @@ const tabs: SiteContentTab[] = [
   { href: "/admin/site-content/newsletter", label: "Newsletter" },
   { href: "/admin/site-content/store-locator", label: "Store Locator" },
   { href: "/admin/site-content/testimonials", label: "Testimonials" },
+  { href: "/admin/site-content/trust-pages", label: "Trust Pages" },
   {
     href: "/admin/site-content/travel-with-pets",
     label: "Travel with Pets",

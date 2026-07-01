@@ -7,6 +7,7 @@ import {
   HomeCollections,
   HeroBanner,
   HomepageContent,
+  SitePagesContent,
   MediaItem,
 } from "@/types";
 
@@ -21,6 +22,7 @@ export interface CatalogSyncSnapshot {
   about: AboutSection;
   homeCollections: HomeCollections;
   homepageContent: HomepageContent;
+  sitePages: SitePagesContent;
 }
 
 export function isRemoteCatalogEnabled(): boolean {

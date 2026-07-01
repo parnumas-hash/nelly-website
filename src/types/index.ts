@@ -127,10 +127,90 @@ export interface HeroBanner {
   active: boolean;
 }
 
+export type SitePageKey =
+  | "shipping"
+  | "returns"
+  | "faq"
+  | "howToShop"
+  | "privacy"
+  | "terms";
+
+export interface SitePageSection {
+  heading?: string;
+  paragraphs: string[];
+  bullets?: string[];
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface HowToShopStep {
+  step: number;
+  title: string;
+  description: string;
+}
+
+export interface SitePageContent {
+  title: string;
+  description: string;
+  sections: SitePageSection[];
+}
+
+export interface SiteFaqContent {
+  title: string;
+  description: string;
+  items: FaqItem[];
+}
+
+export interface SiteHowToShopContent {
+  title: string;
+  description: string;
+  steps: HowToShopStep[];
+  ctaText: string;
+  ctaHref: string;
+}
+
+export interface SitePagesContent {
+  shipping: SitePageContent;
+  returns: SitePageContent;
+  faq: SiteFaqContent;
+  howToShop: SiteHowToShopContent;
+  privacy: SitePageContent;
+  terms: SitePageContent;
+}
+
+export interface FooterLink {
+  label: string;
+  href: string;
+}
+
+export interface FooterLinkColumn {
+  title: string;
+  links: FooterLink[];
+}
+
+export type FooterSocialPlatform = "instagram" | "facebook" | "email";
+
+export interface FooterSocialLink {
+  platform: FooterSocialPlatform;
+  label: string;
+  href: string;
+}
+
 export interface FooterBranding {
   logoUrl: string;
   legalName: string;
   description: string;
+  columns: {
+    shop: FooterLinkColumn;
+    company: FooterLinkColumn;
+    support: FooterLinkColumn;
+  };
+  socialLinks: FooterSocialLink[];
+  copyrightText: string;
+  legalLinks: FooterLink[];
 }
 
 export interface AboutSection {

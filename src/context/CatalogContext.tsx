@@ -20,6 +20,7 @@ import {
   AboutSection,
   HomeCollections,
   HomepageContent,
+  SitePagesContent,
   MediaItem,
   Product,
   ProductFilters,
@@ -43,6 +44,7 @@ import {
   loadAbout,
   loadHomeCollections,
   loadHomepageContent,
+  loadSitePages,
   resetAdminStorageToDefaults,
   StorageQuotaError,
   STORAGE_QUOTA_MESSAGE,
@@ -54,6 +56,7 @@ import {
   persistAbout as writeAboutLocal,
   persistHomeCollections as writeHomeCollectionsLocal,
   persistHomepageContent as writeHomepageContentLocal,
+  persistSitePages as writeSitePagesLocal,
   persistBrands as writeBrandsLocal,
   persistCategories as writeCategoriesLocal,
   persistMedia as writeMediaLocal,
@@ -105,6 +108,11 @@ import {
   getDefaultHomepageContent,
   mergeHomepageContent,
 } from "@/lib/admin/homepage-content";
+import { mergeFooterBranding } from "@/lib/admin/footer-content";
+import {
+  getDefaultSitePagesContent,
+  mergeSitePagesContent,
+} from "@/lib/admin/site-pages-content";
 import { fetchStagedLocalRestore } from "@/lib/admin/local-restore";
 import { getDefaultCatalogSnapshot } from "@/lib/supabase/catalog-store";
 import { CATALOG_VERSION } from "@/lib/admin/storage";
@@ -126,6 +134,7 @@ interface CatalogContextType {
   about: AboutSection;
   homeCollections: HomeCollections;
   homepageContent: HomepageContent;
+  sitePages: SitePagesContent;
   addProduct: (data: ProductFormData) => AdminProduct;
   updateProduct: (id: string, data: ProductFormData) => void;
   deleteProduct: (id: string) => void;
@@ -161,6 +170,7 @@ interface CatalogContextType {
   updateAbout: (data: Partial<AboutSection>) => boolean;
   updateHomeCollections: (data: HomeCollections) => boolean;
   updateHomepageContent: (data: Partial<HomepageContent>) => boolean;
+  updateSitePages: (data: Partial<SitePagesContent>) => boolean;
   getProductBySlug: (slug: string) => Product | undefined;
   getAdminProduct: (id: string) => AdminProduct | undefined;
   filterProducts: (filters: ProductFilters) => Product[];
@@ -242,6 +252,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [about, setAbout] = useState<AboutSection | null>(null);
   const [homeCollections, setHomeCollections] = useState<HomeCollections | null>(null);
   const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
+  const [sitePages, setSitePages] = useState<SitePagesContent | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
   const mediaRef = useRef<MediaItem[]>([]);
   const adminProductsRef = useRef<AdminProduct[]>([]);
@@ -252,6 +263,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const aboutRef = useRef<AboutSection | null>(null);
   const homeCollectionsRef = useRef<HomeCollections | null>(null);
   const homepageContentRef = useRef<HomepageContent | null>(null);
+  const sitePagesRef = useRef<SitePagesContent | null>(null);
 
   useEffect(() => {
     mediaRef.current = media;
@@ -289,6 +301,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     homepageContentRef.current = homepageContent;
   }, [homepageContent]);
 
+  useEffect(() => {
+    sitePagesRef.current = sitePages;
+  }, [sitePages]);
+
   const resolveBannerFallback = useCallback(
     () => (isRemoteCatalogEnabled() ? getDefaultBanner() : loadBanner()),
     []
@@ -320,6 +336,14 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const resolveSitePagesFallback = useCallback(
+    () =>
+      isRemoteCatalogEnabled()
+        ? getDefaultSitePagesContent()
+        : loadSitePages(),
+    []
+  );
+
   const syncRemoteCatalog = useCallback(
     (overrides?: Partial<CatalogSyncSnapshot>) => {
       scheduleRemoteCatalogSync(
@@ -336,6 +360,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
             homeCollectionsRef.current ?? resolveHomeCollectionsFallback(),
           homepageContent:
             homepageContentRef.current ?? resolveHomepageContentFallback(),
+          sitePages: sitePagesRef.current ?? resolveSitePagesFallback(),
           ...overrides,
         })
       );
@@ -346,6 +371,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     resolveAboutFallback,
     resolveHomeCollectionsFallback,
     resolveHomepageContentFallback,
+    resolveSitePagesFallback,
   ]);
 
   const enrichProducts = useCallback(
@@ -382,6 +408,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       homeCollectionsRef.current = normalized.homeCollections;
       setHomepageContent(normalized.homepageContent);
       homepageContentRef.current = normalized.homepageContent;
+      setSitePages(normalized.sitePages);
+      sitePagesRef.current = normalized.sitePages;
     },
     [enrichProducts]
   );
@@ -445,6 +473,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
           setAbout(snapshot.about);
           setHomeCollections(snapshot.homeCollections);
           setHomepageContent(snapshot.homepageContent);
+          setSitePages(snapshot.sitePages);
           setStorageError(null);
           setReady(true);
           return;
@@ -477,6 +506,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setAbout(catalog.about);
         setHomeCollections(catalog.homeCollections);
         setHomepageContent(catalog.homepageContent);
+        setSitePages(catalog.sitePages);
       } catch (error) {
         if (error instanceof StorageQuotaError) {
           setStorageError(error.message);
@@ -495,6 +525,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setAbout(loadAbout());
         setHomeCollections(loadHomeCollections());
         setHomepageContent(loadHomepageContent());
+        setSitePages(loadSitePages());
       } finally {
         if (!cancelled) setReady(true);
       }
@@ -983,6 +1014,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setAbout(snapshot.about);
         setHomeCollections(snapshot.homeCollections);
         setHomepageContent(snapshot.homepageContent);
+        setSitePages(snapshot.sitePages);
       }
       setStorageError(null);
       syncRemoteCatalog();
@@ -1006,6 +1038,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       about: about ?? resolveAboutFallback(),
       homeCollections: homeCollections ?? resolveHomeCollectionsFallback(),
       homepageContent: homepageContent ?? resolveHomepageContentFallback(),
+      sitePages: sitePages ?? resolveSitePagesFallback(),
     });
     downloadCatalogBackup(backup);
     setStorageError(null);
@@ -1017,11 +1050,13 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     about,
     homeCollections,
     homepageContent,
+    sitePages,
     resolveBannerFallback,
     resolveFooterFallback,
     resolveAboutFallback,
     resolveHomeCollectionsFallback,
     resolveHomepageContentFallback,
+    resolveSitePagesFallback,
   ]);
 
   const restoreCatalogBackup = useCallback(
@@ -1048,6 +1083,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         setAbout(snapshot.about);
         setHomeCollections(snapshot.homeCollections);
         setHomepageContent(snapshot.homepageContent);
+        setSitePages(snapshot.sitePages);
         setStorageError(null);
         return getCatalogBackupSummary(backup);
       } catch (error) {
@@ -1088,7 +1124,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, [syncRemoteCatalog, resolveBannerFallback]);
 
   const updateFooter = useCallback((data: Partial<FooterBranding>): boolean => {
-    const next = { ...(footerRef.current ?? resolveFooterFallback()), ...data };
+    const next = mergeFooterBranding(
+      footerRef.current ?? resolveFooterFallback(),
+      data
+    );
     footerRef.current = next;
     setFooter(next);
     try {
@@ -1178,6 +1217,34 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       return true;
     },
     [syncRemoteCatalog, resolveHomepageContentFallback]
+  );
+
+  const updateSitePages = useCallback(
+    (data: Partial<SitePagesContent>): boolean => {
+      const next = mergeSitePagesContent(
+        sitePagesRef.current ?? resolveSitePagesFallback(),
+        data
+      );
+      sitePagesRef.current = next;
+      setSitePages(next);
+      try {
+        writeSitePagesLocal(next);
+        setStorageError(null);
+      } catch (error) {
+        if (error instanceof StorageQuotaError && isRemoteCatalogEnabled()) {
+          setStorageError(null);
+        } else if (error instanceof StorageQuotaError) {
+          setStorageError(error.message);
+          return false;
+        } else {
+          setStorageError("Could not save trust pages.");
+          return false;
+        }
+      }
+      syncRemoteCatalog({ sitePages: next });
+      return true;
+    },
+    [syncRemoteCatalog, resolveSitePagesFallback]
   );
 
   const getProductBySlug = useCallback(
@@ -1310,6 +1377,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     about: about ?? resolveAboutFallback(),
     homeCollections: homeCollections ?? resolveHomeCollectionsFallback(),
     homepageContent: homepageContent ?? resolveHomepageContentFallback(),
+    sitePages: sitePages ?? resolveSitePagesFallback(),
     addProduct,
     updateProduct,
     deleteProduct,
@@ -1338,6 +1406,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     updateAbout,
     updateHomeCollections,
     updateHomepageContent,
+    updateSitePages,
     getProductBySlug,
     getAdminProduct,
     filterProducts,

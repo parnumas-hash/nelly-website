@@ -1,4 +1,4 @@
-import { FaqItem } from "@/lib/site-pages";
+import { FaqItem } from "@/types";
 
 export default function FaqList({ items }: { items: FaqItem[] }) {
   return (

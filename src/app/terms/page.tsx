@@ -1,21 +1,14 @@
 import type { Metadata } from "next";
-import ContentPageLayout from "@/components/content/ContentPageLayout";
-import ContentSections from "@/components/content/ContentSections";
-import { termsPage } from "@/lib/site-pages";
+import TermsPageClient from "@/components/content/TermsPageClient";
+import { getDefaultSitePagesContent } from "@/lib/admin/site-pages-content";
+
+const defaults = getDefaultSitePagesContent();
 
 export const metadata: Metadata = {
-  title: termsPage.title,
-  description: termsPage.description,
+  title: defaults.terms.title,
+  description: defaults.terms.description,
 };
 
 export default function TermsPage() {
-  return (
-    <ContentPageLayout
-      eyebrow="Legal"
-      title={termsPage.title}
-      description={termsPage.description}
-    >
-      <ContentSections sections={termsPage.sections} />
-    </ContentPageLayout>
-  );
+  return <TermsPageClient />;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
@@ -10,13 +11,30 @@ import { isRemoteCatalogEnabled } from "@/lib/admin/catalog-sync";
 import { loadBanner } from "@/lib/admin/storage";
 import { HERO_BANNER_ASPECT } from "@/lib/brand-assets";
 import { shouldUnoptimizeBanner } from "@/lib/image-utils";
+import { cn } from "@/lib/utils";
+
+function HeroBannerSkeleton() {
+  return (
+    <section className="relative w-full bg-[#f7f3ee]">
+      <div
+        className="mx-auto w-full max-w-[1920px] animate-pulse bg-neutral-200/80"
+        style={{ aspectRatio: HERO_BANNER_ASPECT }}
+      />
+    </section>
+  );
+}
 
 export default function HeroVideo() {
   const prefersReducedMotion = useReducedMotion();
   const { banner: catalogBanner, ready } = useCatalog();
+  const [posterLoaded, setPosterLoaded] = useState(false);
   const banner = isRemoteCatalogEnabled()
     ? catalogBanner
     : { ...loadBanner(), ...catalogBanner };
+
+  useEffect(() => {
+    setPosterLoaded(false);
+  }, [banner.posterUrl]);
 
   const fade = (delay: number) =>
     prefersReducedMotion
@@ -27,15 +45,8 @@ export default function HeroVideo() {
           transition: { delay, duration: 0.6, ease: [0.25, 0.1, 0.25, 1] },
         };
 
-  if (!ready && !isRemoteCatalogEnabled()) {
-    return (
-      <section className="relative w-full bg-[#f7f3ee]">
-        <div
-          className="mx-auto w-full max-w-[1920px] animate-pulse bg-neutral-200/80"
-          style={{ aspectRatio: HERO_BANNER_ASPECT }}
-        />
-      </section>
-    );
+  if (!ready) {
+    return <HeroBannerSkeleton />;
   }
 
   if (!banner.active) return null;
@@ -53,14 +64,22 @@ export default function HeroVideo() {
             className="relative w-full"
             style={{ aspectRatio: HERO_BANNER_ASPECT }}
           >
+            {!posterLoaded ? (
+              <div className="absolute inset-0 animate-pulse bg-neutral-200/80" />
+            ) : null}
             <Image
               src={banner.posterUrl}
               alt={`${banner.title} — ${banner.subtitle}`}
               fill
               priority
-              className="object-contain object-center"
+              className={cn(
+                "object-contain object-center transition-opacity duration-300",
+                posterLoaded ? "opacity-100" : "opacity-0"
+              )}
               sizes="100vw"
               unoptimized={shouldUnoptimizeBanner(banner.posterUrl)}
+              onLoad={() => setPosterLoaded(true)}
+              onError={() => setPosterLoaded(true)}
             />
 
             <Link

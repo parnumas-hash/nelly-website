@@ -13,6 +13,7 @@ create table if not exists public.catalog_store (
   about jsonb not null default '{}'::jsonb,
   home_collections jsonb not null default '{}'::jsonb,
   homepage_content jsonb not null default '{}'::jsonb,
+  site_pages jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
 

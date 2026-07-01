@@ -9,6 +9,7 @@ import {
   HomeCollectionKey,
   HomeCollections,
   HomepageContent,
+  SitePagesContent,
   LegacySeedProduct,
   MediaItem,
   Product,
@@ -18,6 +19,10 @@ import { products as seedProducts, categories as legacyShopCategories } from "@/
 import { brands as seedBrands } from "@/lib/brands";
 import { HERO_POSTER } from "@/lib/media";
 import { BRAND_LOGO_SRC } from "@/lib/brand-assets";
+import {
+  getDefaultFooterBranding,
+  normalizeFooterBranding,
+} from "@/lib/admin/footer-content";
 import { images, unsplash } from "@/lib/images";
 import { slugify } from "@/lib/utils";
 import { sortBrandsAlphabetically } from "@/lib/brand-categories";
@@ -35,6 +40,10 @@ import {
   normalizeHomepageContent,
 } from "@/lib/admin/homepage-content";
 import {
+  getDefaultSitePagesContent,
+  normalizeSitePagesContent,
+} from "@/lib/admin/site-pages-content";
+import {
   getSeedImagesForProduct,
   repairAdminProduct,
   sanitizeImageList,
@@ -51,6 +60,7 @@ export const STORAGE_KEYS = {
   about: "nelly-admin-about",
   homeCollections: "nelly-admin-home-collections",
   homepageContent: "nelly-admin-homepage-content",
+  sitePages: "nelly-admin-site-pages",
   catalogVersion: "nelly-catalog-version",
 } as const;
 
@@ -601,29 +611,16 @@ export function loadBanner(): HeroBanner {
 }
 
 export function getDefaultFooter(): FooterBranding {
-  return {
-    logoUrl: BRAND_LOGO_SRC,
-    legalName: "NELLY GROUP CO., LTD.",
-    description:
-      "Premium pet lifestyle, curated with care. NELLY GROUP brings together the world's finest brands for companions who deserve the extraordinary.",
-  };
+  return getDefaultFooterBranding();
 }
 
 export function loadFooter(): FooterBranding {
   const stored = read<FooterBranding>(STORAGE_KEYS.footer);
-  const defaults = getDefaultFooter();
-  const footer = stored ?? defaults;
-  return {
-    ...defaults,
-    ...footer,
-    logoUrl: sanitizeImageUrl(footer.logoUrl, defaults.logoUrl),
-    legalName: footer.legalName?.trim() || defaults.legalName,
-    description: footer.description?.trim() || defaults.description,
-  };
+  return normalizeFooterBranding(stored);
 }
 
 export function saveFooter(footer: FooterBranding): void {
-  write(STORAGE_KEYS.footer, footer);
+  write(STORAGE_KEYS.footer, normalizeFooterBranding(footer));
 }
 
 export function getDefaultAbout(): AboutSection {
@@ -730,6 +727,15 @@ export function saveHomepageContent(content: HomepageContent): void {
   write(STORAGE_KEYS.homepageContent, normalizeHomepageContent(content));
 }
 
+export function loadSitePages(): SitePagesContent {
+  const stored = read<SitePagesContent>(STORAGE_KEYS.sitePages);
+  return normalizeSitePagesContent(stored);
+}
+
+export function saveSitePages(content: SitePagesContent): void {
+  write(STORAGE_KEYS.sitePages, normalizeSitePagesContent(content));
+}
+
 export function saveBanner(banner: HeroBanner): void {
   write(STORAGE_KEYS.banner, banner);
 }
@@ -773,6 +779,7 @@ export function resetAdminStorageToDefaults(): {
   about: AboutSection;
   homeCollections: HomeCollections;
   homepageContent: HomepageContent;
+  sitePages: SitePagesContent;
 } {
   clearAdminStorage();
   const brands = getDefaultBrands();
@@ -784,6 +791,7 @@ export function resetAdminStorageToDefaults(): {
   const about = getDefaultAbout();
   const homeCollections = getDefaultHomeCollections();
   const homepageContent = getDefaultHomepageContent();
+  const sitePages = getDefaultSitePagesContent();
   write(STORAGE_KEYS.catalogVersion, CATALOG_VERSION);
   saveProducts(products);
   saveBrands(brands);
@@ -794,7 +802,8 @@ export function resetAdminStorageToDefaults(): {
   saveAbout(about);
   saveHomeCollections(homeCollections);
   saveHomepageContent(homepageContent);
-  return { products, brands, categories, media, banner, footer, about, homeCollections, homepageContent };
+  saveSitePages(sitePages);
+  return { products, brands, categories, media, banner, footer, about, homeCollections, homepageContent, sitePages };
 }
 
 export function initializeCatalogFromStorage(): {
@@ -807,6 +816,7 @@ export function initializeCatalogFromStorage(): {
   about: AboutSection;
   homeCollections: HomeCollections;
   homepageContent: HomepageContent;
+  sitePages: SitePagesContent;
   migrated: boolean;
 } {
   let media = loadMedia();
@@ -817,6 +827,7 @@ export function initializeCatalogFromStorage(): {
   const about = loadAbout();
   const homeCollections = loadHomeCollections();
   const homepageContent = loadHomepageContent();
+  const sitePages = loadSitePages();
   const version = read<number>(STORAGE_KEYS.catalogVersion);
   const stored = read<unknown[]>(STORAGE_KEYS.products);
   const defaults = getDefaultProducts();
@@ -885,5 +896,5 @@ export function initializeCatalogFromStorage(): {
     }
   }
 
-  return { products: enriched, brands, categories, media, banner, footer, about, homeCollections, homepageContent, migrated };
+  return { products: enriched, brands, categories, media, banner, footer, about, homeCollections, homepageContent, sitePages, migrated };
 }

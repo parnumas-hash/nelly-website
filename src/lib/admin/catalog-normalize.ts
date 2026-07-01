@@ -9,8 +9,13 @@ import {
   getDefaultProducts,
 } from "@/lib/admin/storage";
 import { normalizeBrandCategories } from "@/lib/brand-categories";
-import { AboutSection, FooterBranding, HeroBanner, HomeCollections, HomepageContent } from "@/types";
-import { getDefaultHomepageContent, normalizeHomepageContent } from "@/lib/admin/homepage-content";
+import { AboutSection, FooterBranding, HeroBanner, HomeCollections, HomepageContent, SitePagesContent } from "@/types";
+import { normalizeFooterBranding } from "@/lib/admin/footer-content";
+import { normalizeHomepageContent, getDefaultHomepageContent } from "@/lib/admin/homepage-content";
+import {
+  getDefaultSitePagesContent,
+  normalizeSitePagesContent,
+} from "@/lib/admin/site-pages-content";
 
 export function normalizeCatalogSnapshot(
   snapshot: Partial<CatalogSyncSnapshot> | null | undefined
@@ -37,10 +42,10 @@ export function normalizeCatalogSnapshot(
       ...(snapshot?.banner ?? {}),
       active: snapshot?.banner?.active !== false,
     } as HeroBanner,
-    footer: {
+    footer: normalizeFooterBranding({
       ...fallbackFooter,
       ...(snapshot?.footer ?? {}),
-    } as FooterBranding,
+    }),
     about: {
       ...fallbackAbout,
       ...(snapshot?.about ?? {}),
@@ -60,5 +65,6 @@ export function normalizeCatalogSnapshot(
       },
     } as HomeCollections,
     homepageContent: normalizeHomepageContent(snapshot?.homepageContent),
+    sitePages: normalizeSitePagesContent(snapshot?.sitePages),
   };
 }

@@ -1,9 +1,5 @@
 /**
- * Add homepage_content column to catalog_store on Supabase Postgres.
- * Requires DATABASE_URL or SUPABASE_DB_PASSWORD in .env.local
- *
- * DATABASE_URL example:
- * postgresql://postgres.[ref]:[password]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+ * Add site_pages column to catalog_store on Supabase Postgres.
  */
 
 import { readFile } from "node:fs/promises";
@@ -47,13 +43,13 @@ function resolveDatabaseUrl() {
 
 const SQL = `
 alter table public.catalog_store
-  add column if not exists homepage_content jsonb not null default '{}'::jsonb;
+  add column if not exists site_pages jsonb not null default '{}'::jsonb;
 `;
 
 async function checkColumn(supabase) {
   const { error } = await supabase
     .from("catalog_store")
-    .select("id, homepage_content")
+    .select("id, site_pages")
     .eq("id", "main")
     .maybeSingle();
 
@@ -98,7 +94,7 @@ async function main() {
   const before = await checkColumn(supabase);
 
   if (before.ok) {
-    console.log("Migration already applied — homepage_content column exists.");
+    console.log("Migration already applied — site_pages column exists.");
     return;
   }
 
@@ -108,8 +104,7 @@ async function main() {
   if (!databaseUrl) {
     console.error(
       "Cannot run DDL without DATABASE_URL or SUPABASE_DB_PASSWORD in .env.local.\n" +
-        "Add your Supabase database password from Dashboard → Project Settings → Database,\n" +
-        "or paste migration-homepage-content.sql into Supabase Dashboard → SQL Editor."
+        "Or paste migration-site-pages.sql into Supabase Dashboard → SQL Editor."
     );
     process.exitCode = 1;
     return;

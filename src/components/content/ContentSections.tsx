@@ -1,4 +1,4 @@
-import { SitePageSection } from "@/lib/site-pages";
+import { SitePageSection } from "@/types";
 
 export default function ContentSections({
   sections,
