@@ -19,6 +19,7 @@ import {
 } from "@/lib/variant-matrix";
 import { formatPrice } from "@/lib/utils";
 import { shouldUnoptimize } from "@/lib/image-utils";
+import { filterImageUploadFiles } from "@/lib/media-compress";
 
 interface VariantMatrixEditorProps {
   product: AdminProduct;
@@ -117,10 +118,19 @@ function VariantRowImages({
   const inputRef = useRef<HTMLInputElement>(null);
   const { addMedia, getMediaUrl, storageError } = useCatalog();
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files) return;
     setError(null);
+
+    const imageFiles = filterImageUploadFiles(files);
+    if (imageFiles.length === 0) {
+      setError("Please choose an image file (JPG, PNG, WebP, etc.).");
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
     const next = [...imageIds];
     const remaining = MAX_VARIANT_IMAGES - next.length;
 
@@ -129,19 +139,23 @@ function VariantRowImages({
       return;
     }
 
-    for (const file of Array.from(files).slice(0, remaining)) {
-      if (!file.type.startsWith("image/")) continue;
-      try {
-        const item = await addMedia(file);
-        next.push(item.id);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Upload failed.");
-        break;
+    setUploading(true);
+    try {
+      for (const file of imageFiles.slice(0, remaining)) {
+        try {
+          const item = await addMedia(file);
+          next.push(item.id);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Upload failed.");
+          break;
+        }
       }
-    }
 
-    if (next.length !== imageIds.length) onChange(next);
-    if (inputRef.current) inputRef.current.value = "";
+      if (next.length !== imageIds.length) onChange(next);
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
   };
 
   const canAdd = imageIds.length < MAX_VARIANT_IMAGES;
@@ -182,8 +196,9 @@ function VariantRowImages({
         {canAdd && (
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
-            className="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50 hover:border-primary dark:border-neutral-700 dark:bg-neutral-950"
+            onClick={() => !uploading && inputRef.current?.click()}
+            disabled={uploading}
+            className="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50 hover:border-primary disabled:cursor-wait disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-950"
             aria-label="Add SKU images"
           >
             <Upload className="h-4 w-4 text-neutral-400" />
@@ -252,7 +267,15 @@ export default function VariantMatrixEditor({
   useEffect(() => {
     setOptions(initialOptions);
     setRows(buildMatrixRows(initialOptions, variants));
-  }, [liveProduct.updatedAt, initialOptions, variants]);
+    setSaved(false);
+  }, [liveProduct.id]);
+
+  useEffect(() => {
+    if (!saved) return;
+    setOptions(initialOptions);
+    setRows(buildMatrixRows(initialOptions, variants));
+    setSaved(false);
+  }, [saved, liveProduct.updatedAt, initialOptions, variants]);
 
   const updateOptions = (patch: Partial<VariantMatrixOptions>) => {
     const next = { ...options, ...patch };

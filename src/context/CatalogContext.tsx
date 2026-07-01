@@ -627,11 +627,12 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const persistProducts = useCallback(
     (next: AdminProduct[]) => {
       const enriched = enrichProducts(next, mediaRef.current);
+      adminProductsRef.current = enriched;
       setAdminProducts(enriched);
       try {
         writeProductsLocal(enriched);
         setStorageError(null);
-        syncRemoteCatalog();
+        syncRemoteCatalog({ products: enriched });
       } catch (error) {
         if (error instanceof StorageQuotaError) {
           setStorageError(error.message);

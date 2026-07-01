@@ -128,12 +128,23 @@ export async function ensureDataUrlMaxBytes(
   return fitImageToMaxBytes(image, width, height, maxBytes, preferPng);
 }
 
+const IMAGE_FILE_EXTENSION = /\.(jpe?g|png|gif|webp|bmp|avif|heic|heif|svg)$/i;
+
+export function isImageUploadFile(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  return IMAGE_FILE_EXTENSION.test(file.name);
+}
+
+export function filterImageUploadFiles(files: FileList | File[]): File[] {
+  return Array.from(files).filter(isImageUploadFile);
+}
+
 export async function compressImageFile(
   file: File,
   options: CompressImageOptions = {}
 ): Promise<string> {
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Please upload an image file.");
+  if (!isImageUploadFile(file)) {
+    throw new Error("Please upload an image file (JPG, PNG, WebP, etc.).");
   }
 
   const maxBytes = options.maxBytes ?? MAX_UPLOAD_BYTES;

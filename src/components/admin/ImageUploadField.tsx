@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import { useCatalog } from "@/context/CatalogContext";
 import { cn } from "@/lib/utils";
 import { shouldUnoptimize } from "@/lib/image-utils";
+import { filterImageUploadFiles } from "@/lib/media-compress";
 
 interface ImageUploadFieldProps {
   imageIds: string[];
@@ -19,24 +20,47 @@ export default function ImageUploadField({
   label = "Product Images",
 }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { addMedia, getMediaUrl } = useCatalog();
+  const { addMedia, getMediaUrl, storageError } = useCatalog();
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files) return;
-    const nextIds = [...imageIds];
+    setUploadError(null);
 
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/")) continue;
-      try {
-        const item = await addMedia(file);
-        nextIds.push(item.id);
-      } catch {
-        break;
-      }
+    const imageFiles = filterImageUploadFiles(files);
+    if (imageFiles.length === 0) {
+      setUploadError("Please choose an image file (JPG, PNG, WebP, etc.).");
+      if (inputRef.current) inputRef.current.value = "";
+      return;
     }
 
-    onChange(nextIds);
+    const nextIds = [...imageIds];
+
+    setUploading(true);
+    try {
+      for (const file of imageFiles) {
+        try {
+          const item = await addMedia(file);
+          nextIds.push(item.id);
+        } catch (err) {
+          setUploadError(
+            err instanceof Error ? err.message : "Could not upload image."
+          );
+          break;
+        }
+      }
+
+      if (nextIds.length !== imageIds.length) {
+        onChange(nextIds);
+      }
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
   };
+
+  const errorMessage = uploadError ?? storageError;
 
   return (
     <div>
@@ -45,11 +69,16 @@ export default function ImageUploadField({
       </label>
 
       <div
-        onClick={() => inputRef.current?.click()}
-        className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 px-6 py-8 transition-colors hover:border-primary hover:bg-primary/5 dark:border-neutral-700"
+        onClick={() => !uploading && inputRef.current?.click()}
+        className={cn(
+          "flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 px-6 py-8 transition-colors hover:border-primary hover:bg-primary/5 dark:border-neutral-700",
+          uploading && "pointer-events-none opacity-60"
+        )}
       >
         <Upload className="mb-2 h-8 w-8 text-neutral-400" />
-        <p className="text-sm text-neutral-500">Click to upload images</p>
+        <p className="text-sm text-neutral-500">
+          {uploading ? "Uploading…" : "Click to upload images"}
+        </p>
         <p className="mt-1 text-xs text-neutral-400">Max 5 MB (auto-compressed) · up to 1920px</p>
       </div>
 
@@ -61,6 +90,10 @@ export default function ImageUploadField({
         className="hidden"
         onChange={(e) => void handleFiles(e.target.files)}
       />
+
+      {errorMessage && (
+        <p className="mt-2 text-xs text-red-600">{errorMessage}</p>
+      )}
 
       {imageIds.length > 0 && (
         <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
