@@ -19,6 +19,7 @@ import {
 } from "@/lib/variant-matrix";
 import { formatPrice } from "@/lib/utils";
 import { shouldUnoptimize } from "@/lib/image-utils";
+import { VariantFormData } from "@/types";
 import { filterImageUploadFiles } from "@/lib/media-compress";
 
 interface VariantMatrixEditorProps {
@@ -106,6 +107,24 @@ function OptionValueTags({
       </div>
     </div>
   );
+}
+
+function rowToVariantForm(
+  row: VariantMatrixRow,
+  imageIds: string[]
+): VariantFormData {
+  return {
+    color: row.color,
+    size: row.size,
+    scent: row.scent,
+    sku: row.sku,
+    barcode: row.barcode,
+    price: row.price,
+    salePrice: row.salePrice,
+    stock: row.stock,
+    imageIds,
+    status: row.status,
+  };
 }
 
 function VariantRowImages({
@@ -226,7 +245,7 @@ function VariantRowImages({
 export default function VariantMatrixEditor({
   product,
 }: VariantMatrixEditorProps) {
-  const { replaceVariants, getAdminProduct } = useCatalog();
+  const { replaceVariants, getAdminProduct, updateVariant } = useCatalog();
   const liveProduct = getAdminProduct(product.id) ?? product;
   const variants = useMemo(
     () => liveProduct.variants ?? [],
@@ -288,6 +307,17 @@ export default function VariantMatrixEditor({
       prev.map((row) => (row.key === key ? { ...row, ...patch } : row))
     );
     setSaved(false);
+  };
+
+  const handleRowImageIdsChange = (row: VariantMatrixRow, imageIds: string[]) => {
+    updateRow(row.key, { imageIds });
+    if (row.existingId) {
+      updateVariant(
+        liveProduct.id,
+        row.existingId,
+        rowToVariantForm(row, imageIds)
+      );
+    }
   };
 
   const applyBulk = () => {
@@ -362,7 +392,8 @@ export default function VariantMatrixEditor({
         <h3 className="text-base font-semibold">Bulk Variant Matrix</h3>
         <p className="mt-1 text-sm text-neutral-500">
           Define colors and sizes once — all combinations are generated
-          automatically, like Shopee Seller Centre.
+          automatically, like Shopee Seller Centre. Images on existing SKUs save
+          automatically when uploaded.
         </p>
       </div>
 
@@ -489,7 +520,7 @@ export default function VariantMatrixEditor({
                       <VariantRowImages
                         imageIds={row.imageIds}
                         onChange={(imageIds) =>
-                          updateRow(row.key, { imageIds })
+                          handleRowImageIdsChange(row, imageIds)
                         }
                       />
                     </td>

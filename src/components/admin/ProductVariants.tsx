@@ -123,6 +123,7 @@ export default function ProductVariants({ product: initial }: ProductVariantsPro
           {isAdding && (
             <div className="mb-6">
               <VariantEditor
+                productId={product.id}
                 onSave={handleSaveNew}
                 onCancel={() => setIsAdding(false)}
               />
@@ -154,6 +155,7 @@ export default function ProductVariants({ product: initial }: ProductVariantsPro
                   return (
                     <VariantEditor
                       key={variant.id}
+                      productId={product.id}
                       variant={variant}
                       onSave={handleSaveEdit}
                       onCancel={() => setEditingId(null)}

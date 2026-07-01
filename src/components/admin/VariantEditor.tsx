@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import SortableImageUpload from "@/components/admin/SortableImageUpload";
+import { useCatalog } from "@/context/CatalogContext";
 import {
   ProductVariant,
   VariantFormData,
@@ -18,16 +19,19 @@ import { MAX_VARIANT_IMAGES } from "@/lib/variant-matrix";
 import { formatPrice } from "@/lib/utils";
 
 interface VariantEditorProps {
+  productId: string;
   variant?: ProductVariant;
   onSave: (data: VariantFormData) => void;
   onCancel: () => void;
 }
 
 export default function VariantEditor({
+  productId,
   variant,
   onSave,
   onCancel,
 }: VariantEditorProps) {
+  const { updateVariant } = useCatalog();
   const [form, setForm] = useState<VariantFormData>(
     variant ? variantToFormData(variant) : emptyVariantForm()
   );
@@ -143,7 +147,13 @@ export default function VariantEditor({
 
       <SortableImageUpload
         imageIds={form.imageIds}
-        onChange={(imageIds) => update("imageIds", imageIds)}
+        onChange={(imageIds) => {
+          const next = { ...form, imageIds };
+          setForm(next);
+          if (variant) {
+            updateVariant(productId, variant.id, next);
+          }
+        }}
         label={`Variant Images (max ${MAX_VARIANT_IMAGES})`}
       />
 

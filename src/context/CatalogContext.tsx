@@ -644,9 +644,17 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     [enrichProducts, syncRemoteCatalog]
   );
 
+  const mutateProducts = useCallback(
+    (update: (products: AdminProduct[]) => AdminProduct[]) => {
+      persistProducts(update(adminProductsRef.current));
+    },
+    [persistProducts]
+  );
+
   const addProduct = useCallback(
     (data: ProductFormData) => {
-      const slugs = adminProducts.map((p) => p.slug);
+      const products = adminProductsRef.current;
+      const slugs = products.map((p) => p.slug);
       const slug =
         data.slug.trim() !== ""
           ? generateSlug(data.slug.trim(), slugs)
@@ -657,22 +665,23 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         slug,
         updatedAt: new Date().toISOString(),
       } as AdminProduct;
-      persistProducts([product, ...adminProducts]);
+      mutateProducts((current) => [product, ...current]);
       return product;
     },
-    [adminProducts, persistProducts]
+    [mutateProducts]
   );
 
   const updateProduct = useCallback(
     (id: string, data: ProductFormData) => {
-      const slugs = adminProducts.filter((p) => p.id !== id).map((p) => p.slug);
+      const products = adminProductsRef.current;
+      const slugs = products.filter((p) => p.id !== id).map((p) => p.slug);
       const trimmed = data.slug.trim();
       const slug =
         trimmed !== ""
           ? generateSlug(trimmed, slugs)
           : generateSlug(data.name, slugs);
-      persistProducts(
-        adminProducts.map((p) =>
+      mutateProducts((current) =>
+        current.map((p) =>
           p.id === id
             ? touchProduct({
                 ...formToAdmin(data, p),
@@ -683,21 +692,21 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         )
       );
     },
-    [adminProducts, persistProducts]
+    [mutateProducts]
   );
 
   const deleteProduct = useCallback(
     (id: string) => {
-      persistProducts(adminProducts.filter((p) => p.id !== id));
+      mutateProducts((current) => current.filter((p) => p.id !== id));
     },
-    [adminProducts, persistProducts]
+    [mutateProducts]
   );
 
   const addVariant = useCallback(
     (productId: string, data: VariantFormData) => {
       const variant = variantFormToVariant(data);
-      persistProducts(
-        adminProducts.map((p) =>
+      mutateProducts((current) =>
+        current.map((p) =>
           p.id === productId
             ? touchProduct({
                 ...p,
@@ -708,13 +717,13 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       );
       return variant;
     },
-    [adminProducts, persistProducts]
+    [mutateProducts]
   );
 
   const updateVariant = useCallback(
     (productId: string, variantId: string, data: VariantFormData) => {
-      persistProducts(
-        adminProducts.map((p) =>
+      mutateProducts((current) =>
+        current.map((p) =>
           p.id === productId
             ? touchProduct({
                 ...p,
@@ -726,13 +735,13 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         )
       );
     },
-    [adminProducts, persistProducts]
+    [mutateProducts]
   );
 
   const deleteVariant = useCallback(
     (productId: string, variantId: string) => {
-      persistProducts(
-        adminProducts.map((p) =>
+      mutateProducts((current) =>
+        current.map((p) =>
           p.id === productId
             ? touchProduct({
                 ...p,
@@ -742,14 +751,14 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         )
       );
     },
-    [adminProducts, persistProducts]
+    [mutateProducts]
   );
 
   const duplicateVariant = useCallback(
     (productId: string, variantId: string) => {
       let duplicate: ProductVariant | null = null;
-      persistProducts(
-        adminProducts.map((p) => {
+      mutateProducts((current) =>
+        current.map((p) => {
           if (p.id !== productId) return p;
           const source = p.variants.find((v) => v.id === variantId);
           if (!source) return p;
@@ -769,7 +778,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       if (!duplicate) throw new Error("Variant not found");
       return duplicate;
     },
-    [adminProducts, persistProducts]
+    [mutateProducts]
   );
 
   const replaceVariants = useCallback(
@@ -777,8 +786,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       productId: string,
       items: Array<{ data: VariantFormData; existingId?: string }>
     ) => {
-      persistProducts(
-        adminProducts.map((p) => {
+      mutateProducts((current) =>
+        current.map((p) => {
           if (p.id !== productId) return p;
           const existingById = new Map(p.variants.map((v) => [v.id, v]));
           const existingByKey = new Map(
@@ -804,7 +813,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         })
       );
     },
-    [adminProducts, persistProducts]
+    [mutateProducts]
   );
 
   const updateBrand = useCallback(
@@ -892,8 +901,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       }
 
       if (removedIds.length > 0) {
-        persistProducts(
-          adminProducts.map((product) =>
+        mutateProducts((products) =>
+          products.map((product) =>
             removedIds.includes(product.categoryId)
               ? touchProduct({
                   ...product,
@@ -905,7 +914,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         );
       }
     },
-    [categories, adminProducts, persistProducts, syncRemoteCatalog]
+    [categories, mutateProducts, syncRemoteCatalog]
   );
 
   const getBrandBySlugFn = useCallback(
@@ -1351,14 +1360,14 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const importProducts = useCallback(
     (groups: ProductImportGroup[], mode: ProductImportMode) => {
       const { nextProducts, created, updated } = applyProductImportGroups(
-        adminProducts,
+        adminProductsRef.current,
         groups,
         mode
       );
       persistProducts(nextProducts);
       return { created, updated };
     },
-    [adminProducts, persistProducts]
+    [persistProducts]
   );
 
   const sortedBrands = useMemo(
