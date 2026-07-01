@@ -8,6 +8,7 @@ import Button from "@/components/ui/Button";
 import SafeImage from "@/components/ui/SafeImage";
 import ProductImportDialog from "@/components/admin/ProductImportDialog";
 import { useCatalog } from "@/context/CatalogContext";
+import { useAdminSession } from "@/context/AdminSessionContext";
 import { downloadProductImportTemplate } from "@/lib/admin/product-import";
 import { getBrandById } from "@/lib/brand-categories";
 import { getSeedImagesForProduct } from "@/lib/image-utils";
@@ -37,6 +38,8 @@ export default function ProductsAdminPage() {
   const queryParam = searchParams.get("q") || "";
 
   const { adminProducts, brands, categories, deleteProduct, ready } = useCatalog();
+  const { hasPermission } = useAdminSession();
+  const canWriteProducts = hasPermission("products:write");
   const [searchInput, setSearchInput] = useState(queryParam);
   const [importOpen, setImportOpen] = useState(false);
 
@@ -127,40 +130,46 @@ export default function ProductsAdminPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="gap-2"
-            onClick={() => downloadProductImportTemplate(brands, categories)}
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            Download Template
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="gap-2"
-            onClick={() => setImportOpen(true)}
-          >
-            <Upload className="h-4 w-4" />
-            Import Products
-          </Button>
-          <Link
-            href={
-              brandParam
-                ? `/admin/products/new?brandId=${brandParam}`
-                : "/admin/products/new"
-            }
-          >
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Product
-            </Button>
-          </Link>
+          {canWriteProducts ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-2"
+                onClick={() => downloadProductImportTemplate(brands, categories)}
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Download Template
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-2"
+                onClick={() => setImportOpen(true)}
+              >
+                <Upload className="h-4 w-4" />
+                Import Products
+              </Button>
+              <Link
+                href={
+                  brandParam
+                    ? `/admin/products/new?brandId=${brandParam}`
+                    : "/admin/products/new"
+                }
+              >
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Product
+                </Button>
+              </Link>
+            </>
+          ) : null}
         </div>
       </div>
 
-      <ProductImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
+      {canWriteProducts ? (
+        <ProductImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
+      ) : null}
 
       <div className="mb-6 space-y-4">
         <form onSubmit={handleSearchSubmit} className="relative max-w-md">

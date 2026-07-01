@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { AlertTriangle, FileSpreadsheet, Upload, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCatalog } from "@/context/CatalogContext";
+import { useAdminSession } from "@/context/AdminSessionContext";
 import {
   canConfirmProductImport,
   downloadProductImportTemplate,
@@ -23,6 +24,8 @@ export default function ProductImportDialog({
   onClose,
 }: ProductImportDialogProps) {
   const { adminProducts, brands, categories, importProducts } = useCatalog();
+  const { hasPermission } = useAdminSession();
+  const canWriteProducts = hasPermission("products:write");
   const inputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<ProductImportMode>("upsert");
   const [parsed, setParsed] = useState<ParsedProductImport | null>(null);
@@ -79,7 +82,7 @@ export default function ProductImportDialog({
   };
 
   const handleConfirm = () => {
-    if (!parsed || !canConfirmProductImport(parsed)) return;
+    if (!canWriteProducts || !parsed || !canConfirmProductImport(parsed)) return;
     setBusy(true);
     try {
       const summary = importProducts(parsed.groups, mode);
