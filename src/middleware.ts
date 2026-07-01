@@ -23,8 +23,12 @@ function isProtectedCatalogWrite(pathname: string, method: string): boolean {
 }
 
 function isProtectedAdminApi(pathname: string): boolean {
-  return pathname.startsWith("/api/admin/users") ||
-    pathname === "/api/admin/change-password";
+  return (
+    pathname.startsWith("/api/admin/users") ||
+    pathname === "/api/admin/change-password" ||
+    pathname === "/api/admin/import-images" ||
+    pathname.startsWith("/api/admin/orders")
+  );
 }
 
 export async function middleware(request: NextRequest) {
@@ -83,5 +87,7 @@ export const config = {
     "/api/catalog/restore",
     "/api/admin/users/:path*",
     "/api/admin/change-password",
+    "/api/admin/import-images",
+    "/api/admin/orders/:path*",
   ],
 };

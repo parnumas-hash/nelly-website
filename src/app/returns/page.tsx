@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import ReturnsPageClient from "@/components/content/ReturnsPageClient";
-import { getDefaultSitePagesContent } from "@/lib/admin/site-pages-content";
+import { generateTrustPageMetadata } from "@/lib/server/trust-page-metadata";
 
-const defaults = getDefaultSitePagesContent();
-
-export const metadata: Metadata = {
-  title: defaults.returns.title,
-  description: defaults.returns.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return generateTrustPageMetadata("returns");
+}
 
 export default function ReturnsPage() {
   return <ReturnsPageClient />;

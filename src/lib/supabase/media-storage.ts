@@ -64,3 +64,51 @@ export async function ensurePublicUrl(
   if (isStoredMediaUrl(url)) return url;
   return uploadDataUrl(url, storagePath);
 }
+
+function sanitizeRemoteUrl(url: string): URL {
+  const parsed = new URL(url);
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("Only http(s) image URLs are supported.");
+  }
+  return parsed;
+}
+
+export async function uploadRemoteImage(
+  remoteUrl: string,
+  storagePath: string
+): Promise<string> {
+  sanitizeRemoteUrl(remoteUrl);
+
+  const response = await fetch(remoteUrl, { redirect: "follow" });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image (${response.status}).`);
+  }
+
+  const contentType = response.headers.get("content-type") ?? "image/jpeg";
+  if (!contentType.startsWith("image/")) {
+    throw new Error("URL did not return an image.");
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(storagePath, buffer, { contentType, upsert: true });
+
+  if (error) {
+    throw new Error(`Media upload failed: ${error.message}`);
+  }
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
+  return data.publicUrl;
+}
+
+export async function importRemoteImageToStorage(
+  remoteUrl: string,
+  storagePath: string
+): Promise<string> {
+  if (isStoredMediaUrl(remoteUrl)) return remoteUrl;
+  if (isDataUrl(remoteUrl)) return ensurePublicUrl(remoteUrl, storagePath);
+  return uploadRemoteImage(remoteUrl, storagePath);
+}

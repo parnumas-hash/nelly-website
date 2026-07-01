@@ -190,7 +190,7 @@ function parseNumber(value: string, field: string, row: number, issues: ProductI
   return num;
 }
 
-function parseImageUrls(value: string): string[] {
+export function parseImageUrls(value: string): string[] {
   if (!value.trim()) return [];
   return value
     .split("|")

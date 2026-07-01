@@ -23,7 +23,7 @@ export default function ProductImportDialog({
   open,
   onClose,
 }: ProductImportDialogProps) {
-  const { adminProducts, brands, categories, importProducts } = useCatalog();
+  const { adminProducts, brands, categories, importProductsWithImages } = useCatalog();
   const { hasPermission } = useAdminSession();
   const canWriteProducts = hasPermission("products:write");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -99,14 +99,18 @@ export default function ProductImportDialog({
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!canWriteProducts || !parsed || !canConfirmProductImport(parsed)) return;
     setBusy(true);
     try {
-      const summary = importProducts(parsed.groups, mode);
+      const summary = await importProductsWithImages(parsed.groups, mode);
       setResult(summary);
       setParsed(null);
       fileBufferRef.current = null;
+    } catch (error) {
+      setParseError(
+        error instanceof Error ? error.message : "Import failed."
+      );
     } finally {
       setBusy(false);
     }
@@ -260,10 +264,10 @@ export default function ProductImportDialog({
                 </Button>
                 <Button
                   type="button"
-                  onClick={handleConfirm}
+                  onClick={() => void handleConfirm()}
                   disabled={busy || !canConfirmProductImport(parsed)}
                 >
-                  Confirm Import
+                  {busy ? "Importing…" : "Confirm Import"}
                 </Button>
               </div>
             </div>

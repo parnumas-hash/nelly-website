@@ -121,6 +121,16 @@ import {
   type ProductImportGroup,
   type ProductImportMode,
 } from "@/lib/admin/product-import";
+import {
+  attachMediaIdsToImportGroups,
+  buildUrlToMediaIdMap,
+  collectImportImageUrls,
+  filterUrlsNeedingImport,
+} from "@/lib/admin/import-product-images";
+import {
+  applyStockImport,
+  type StockImportRow,
+} from "@/lib/admin/stock-import";
 
 interface CatalogContextType {
   ready: boolean;
@@ -182,6 +192,17 @@ interface CatalogContextType {
     groups: import("@/lib/admin/product-import").ProductImportGroup[],
     mode: import("@/lib/admin/product-import").ProductImportMode
   ) => { created: number; updated: number };
+  importProductsWithImages: (
+    groups: import("@/lib/admin/product-import").ProductImportGroup[],
+    mode: import("@/lib/admin/product-import").ProductImportMode
+  ) => Promise<{ created: number; updated: number }>;
+  importRemoteMediaUrls: (urls: string[]) => Promise<MediaItem[]>;
+  batchAttachVariantImages: (
+    updates: Array<{ productId: string; variantId: string; imageIds: string[] }>
+  ) => number;
+  importStock: (
+    rows: import("@/lib/admin/stock-import").StockImportRow[]
+  ) => { updated: number; skipped: number };
 }
 
 const CatalogContext = createContext<CatalogContextType | undefined>(undefined);
@@ -1370,6 +1391,118 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     [persistProducts]
   );
 
+  const importRemoteMediaUrls = useCallback(
+    async (urls: string[]) => {
+      const unique = [...new Set(urls.filter(Boolean))];
+      if (unique.length === 0) return [];
+
+      const response = await fetch("/api/admin/import-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls: unique }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(payload.error ?? "Could not import images.");
+      }
+
+      const payload = (await response.json()) as {
+        items: MediaItem[];
+        errors?: Array<{ url: string; error: string }>;
+      };
+
+      if (!payload.items?.length) {
+        if (payload.errors?.length) {
+          throw new Error(payload.errors[0]?.error ?? "Could not import images.");
+        }
+        return [];
+      }
+
+      const rollback = mediaRef.current;
+      const knownIds = new Set(rollback.map((item) => item.id));
+      const knownUrls = new Set(rollback.map((item) => item.url));
+      const fresh = payload.items.filter(
+        (item) => !knownIds.has(item.id) && !knownUrls.has(item.url)
+      );
+
+      if (fresh.length > 0) {
+        await commitMedia([...fresh, ...rollback], rollback);
+      }
+
+      return payload.items;
+    },
+    [commitMedia]
+  );
+
+  const batchAttachVariantImages = useCallback(
+    (
+      updates: Array<{ productId: string; variantId: string; imageIds: string[] }>
+    ) => {
+      if (updates.length === 0) return 0;
+
+      let count = 0;
+      mutateProducts((current) =>
+        current.map((product) => {
+          const productUpdates = updates.filter(
+            (item) => item.productId === product.id
+          );
+          if (productUpdates.length === 0) return product;
+
+          return touchProduct({
+            ...product,
+            variants: product.variants.map((variant) => {
+              const update = productUpdates.find(
+                (item) => item.variantId === variant.id
+              );
+              if (!update || update.imageIds.length === 0) return variant;
+
+              count += 1;
+              return {
+                ...variant,
+                imageIds: update.imageIds,
+                images: (variant.images ?? []).filter(isExternalImageUrl),
+              };
+            }),
+          });
+        })
+      );
+
+      return count;
+    },
+    [mutateProducts]
+  );
+
+  const importProductsWithImages = useCallback(
+    async (groups: ProductImportGroup[], mode: ProductImportMode) => {
+      const urls = collectImportImageUrls(groups);
+      const missing = filterUrlsNeedingImport(urls, mediaRef.current);
+
+      if (missing.length > 0) {
+        await importRemoteMediaUrls(missing);
+      }
+
+      const urlToId = buildUrlToMediaIdMap(mediaRef.current);
+      const hydrated = attachMediaIdsToImportGroups(groups, urlToId);
+      return importProducts(hydrated, mode);
+    },
+    [importProducts, importRemoteMediaUrls]
+  );
+
+  const importStock = useCallback(
+    (rows: StockImportRow[]) => {
+      const { nextProducts, updated, skipped } = applyStockImport(
+        adminProductsRef.current,
+        rows
+      );
+      persistProducts(nextProducts);
+      return { updated, skipped };
+    },
+    [persistProducts]
+  );
+
   const sortedBrands = useMemo(
     () => sortBrandsAlphabetically(brands),
     [brands]
@@ -1425,6 +1558,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     getBestSellers,
     searchProducts,
     importProducts,
+    importProductsWithImages,
+    importRemoteMediaUrls,
+    batchAttachVariantImages,
+    importStock,
   };
 
   return (

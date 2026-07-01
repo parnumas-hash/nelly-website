@@ -177,9 +177,11 @@ export default function CartPage() {
                   </div>
                 </div>
               </div>
-              <Button className="mt-6 w-full" size="lg">
-                Proceed to Checkout
-              </Button>
+              <Link href="/checkout" className="mt-6 block">
+                <Button className="w-full" size="lg">
+                  Proceed to Checkout
+                </Button>
+              </Link>
               <Link
                 href="/shop"
                 className="mt-4 block text-center text-sm text-neutral-500 hover:text-primary"

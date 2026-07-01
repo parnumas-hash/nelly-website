@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import ShippingPageClient from "@/components/content/ShippingPageClient";
-import { getDefaultSitePagesContent } from "@/lib/admin/site-pages-content";
+import { generateTrustPageMetadata } from "@/lib/server/trust-page-metadata";
 
-const defaults = getDefaultSitePagesContent();
-
-export const metadata: Metadata = {
-  title: defaults.shipping.title,
-  description: defaults.shipping.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return generateTrustPageMetadata("shipping");
+}
 
 export default function ShippingPage() {
   return <ShippingPageClient />;

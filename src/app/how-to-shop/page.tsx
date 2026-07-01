@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import HowToShopPageView from "@/components/content/HowToShopPageView";
-import { getDefaultSitePagesContent } from "@/lib/admin/site-pages-content";
+import { generateTrustPageMetadata } from "@/lib/server/trust-page-metadata";
 
-const defaults = getDefaultSitePagesContent();
-
-export const metadata: Metadata = {
-  title: defaults.howToShop.title,
-  description: defaults.howToShop.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return generateTrustPageMetadata("howToShop");
+}
 
 export default function HowToShopPage() {
   return <HowToShopPageView />;

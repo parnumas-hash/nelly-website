@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import PrivacyPageClient from "@/components/content/PrivacyPageClient";
-import { getDefaultSitePagesContent } from "@/lib/admin/site-pages-content";
+import { generateTrustPageMetadata } from "@/lib/server/trust-page-metadata";
 
-const defaults = getDefaultSitePagesContent();
-
-export const metadata: Metadata = {
-  title: defaults.privacy.title,
-  description: defaults.privacy.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return generateTrustPageMetadata("privacy");
+}
 
 export default function PrivacyPage() {
   return <PrivacyPageClient />;

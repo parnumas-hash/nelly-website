@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import TermsPageClient from "@/components/content/TermsPageClient";
-import { getDefaultSitePagesContent } from "@/lib/admin/site-pages-content";
+import { generateTrustPageMetadata } from "@/lib/server/trust-page-metadata";
 
-const defaults = getDefaultSitePagesContent();
-
-export const metadata: Metadata = {
-  title: defaults.terms.title,
-  description: defaults.terms.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return generateTrustPageMetadata("terms");
+}
 
 export default function TermsPage() {
   return <TermsPageClient />;

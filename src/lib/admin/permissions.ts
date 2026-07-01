@@ -146,6 +146,7 @@ export interface AdminNavItem {
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin", label: "Dashboard", permission: "dashboard:view" },
   { href: "/admin/products", label: "Products", permission: "products:read" },
+  { href: "/admin/orders", label: "Orders", permission: "orders:read" },
   { href: "/admin/brands", label: "Brands", permission: "brands:read" },
   { href: "/admin/categories", label: "Categories", permission: "categories:read" },
   { href: "/admin/media", label: "Media", permission: "media:read" },
@@ -170,6 +171,7 @@ export function getRequiredPermissionForPath(pathname: string): Permission | nul
     }
     return "products:read";
   }
+  if (pathname.startsWith("/admin/orders")) return "orders:read";
   if (pathname.startsWith("/admin/brands")) return "brands:read";
   if (pathname.startsWith("/admin/categories")) return "categories:read";
   if (pathname.startsWith("/admin/media")) return "media:read";

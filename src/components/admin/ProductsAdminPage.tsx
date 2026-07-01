@@ -7,9 +7,11 @@ import { FileSpreadsheet, Plus, Pencil, Search, Trash2, Upload, X } from "lucide
 import Button from "@/components/ui/Button";
 import SafeImage from "@/components/ui/SafeImage";
 import ProductImportDialog from "@/components/admin/ProductImportDialog";
+import StockImportDialog from "@/components/admin/StockImportDialog";
 import { useCatalog } from "@/context/CatalogContext";
 import { useAdminSession } from "@/context/AdminSessionContext";
 import { downloadProductImportTemplate } from "@/lib/admin/product-import";
+import { countVariantsMissingImages } from "@/lib/admin/missing-variant-images";
 import { getBrandById } from "@/lib/brand-categories";
 import { getSeedImagesForProduct } from "@/lib/image-utils";
 import {
@@ -42,6 +44,7 @@ export default function ProductsAdminPage() {
   const canWriteProducts = hasPermission("products:write");
   const [searchInput, setSearchInput] = useState(queryParam);
   const [importOpen, setImportOpen] = useState(false);
+  const [stockImportOpen, setStockImportOpen] = useState(false);
 
   const brandOptions = useMemo(() => {
     const counts = new Map<string, number>();
@@ -90,6 +93,11 @@ export default function ProductsAdminPage() {
 
     return result;
   }, [adminProducts, brandParam, queryParam, brands]);
+
+  const missingImageCount = useMemo(
+    () => countVariantsMissingImages(adminProducts),
+    [adminProducts]
+  );
 
   const updateFilters = (next: { brand?: string; q?: string }) => {
     const params = new URLSearchParams();
@@ -145,11 +153,28 @@ export default function ProductsAdminPage() {
                 type="button"
                 variant="outline"
                 className="gap-2"
+                onClick={() => setStockImportOpen(true)}
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Import Stock
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-2"
                 onClick={() => setImportOpen(true)}
               >
                 <Upload className="h-4 w-4" />
                 Import Products
               </Button>
+              {missingImageCount > 0 ? (
+                <Link href="/admin/products/missing-images">
+                  <Button type="button" variant="outline" className="gap-2">
+                    <Upload className="h-4 w-4" />
+                    Missing Images ({missingImageCount})
+                  </Button>
+                </Link>
+              ) : null}
               <Link
                 href={
                   brandParam
@@ -168,7 +193,13 @@ export default function ProductsAdminPage() {
       </div>
 
       {canWriteProducts ? (
-        <ProductImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
+        <>
+          <ProductImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
+          <StockImportDialog
+            open={stockImportOpen}
+            onClose={() => setStockImportOpen(false)}
+          />
+        </>
       ) : null}
 
       <div className="mb-6 space-y-4">
