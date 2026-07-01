@@ -1,16 +1,21 @@
 "use client";
 
+import { useMemo } from "react";
 import CollectionSection from "@/components/home/CollectionSection";
 import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultHomeCollections } from "@/lib/admin/storage";
+import { resolveHomeLivingProducts } from "@/lib/homepage-product-selection";
 
 export default function HomeLiving() {
   const { publishedProducts, ready, homeCollections } = useCatalog();
-  const products = ready
-    ? publishedProducts.filter((p) => p.category === "beds").slice(0, 4)
-    : [];
   const content = homeCollections ?? getDefaultHomeCollections();
-  const { title, description, imageUrl, href, imageAlt } = content.home;
+  const { title, description, imageUrl, href, imageAlt, productIds } =
+    content.home;
+
+  const products = useMemo(() => {
+    if (!ready) return [];
+    return resolveHomeLivingProducts(publishedProducts, productIds);
+  }, [ready, publishedProducts, productIds]);
 
   return (
     <CollectionSection

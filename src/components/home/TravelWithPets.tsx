@@ -1,22 +1,21 @@
 "use client";
 
+import { useMemo } from "react";
 import CollectionSection from "@/components/home/CollectionSection";
 import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultHomeCollections } from "@/lib/admin/storage";
-
-function useTravelProducts() {
-  const { publishedProducts, ready } = useCatalog();
-  if (!ready) return [];
-  return publishedProducts
-    .filter((p) => ["strollers", "accessories"].includes(p.category))
-    .slice(0, 4);
-}
+import { resolveTravelCollectionProducts } from "@/lib/homepage-product-selection";
 
 export default function TravelWithPets() {
-  const products = useTravelProducts();
-  const { homeCollections } = useCatalog();
+  const { publishedProducts, ready, homeCollections } = useCatalog();
   const content = homeCollections ?? getDefaultHomeCollections();
-  const { title, description, imageUrl, href, imageAlt } = content.travel;
+  const { title, description, imageUrl, href, imageAlt, productIds } =
+    content.travel;
+
+  const products = useMemo(() => {
+    if (!ready) return [];
+    return resolveTravelCollectionProducts(publishedProducts, productIds);
+  }, [ready, publishedProducts, productIds]);
 
   return (
     <CollectionSection

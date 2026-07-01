@@ -228,6 +228,8 @@ export interface HomeCollection {
   imageUrl: string;
   href: string;
   imageAlt: string;
+  /** Up to 4 product IDs; empty = auto-filter by category */
+  productIds?: string[];
 }
 
 export type HomeCollectionKey = keyof HomeCollections;
@@ -328,6 +330,14 @@ export interface NewsletterSection {
   successMessage: string;
 }
 
+export interface HomepageProductGridSection {
+  title: string;
+  href: string;
+  linkLabel: string;
+  /** Up to 4 product IDs; empty = auto selection */
+  productIds?: string[];
+}
+
 export interface FirstAdventureSection {
   title: string;
   description: string;
@@ -346,6 +356,8 @@ export interface HomepageContent {
   instagram: InstagramGallerySection;
   storeLocator: StoreLocatorSection;
   newsletter: NewsletterSection;
+  newCollection: HomepageProductGridSection;
+  bestSeller: HomepageProductGridSection;
   firstAdventure: FirstAdventureSection;
 }
 

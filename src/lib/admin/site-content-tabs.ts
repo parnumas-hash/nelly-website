@@ -9,6 +9,7 @@ export interface SiteContentTab {
 const tabs: SiteContentTab[] = [
   { href: "/admin/site-content/about", label: "About Us" },
   { href: "/admin/site-content/benefits", label: "Benefits" },
+  { href: "/admin/site-content/best-seller", label: "Best Seller" },
   { href: "/admin/site-content/brand-story", label: "Brand Story" },
   {
     href: "/admin/site-content/eco-friendly",
@@ -25,6 +26,7 @@ const tabs: SiteContentTab[] = [
   },
   { href: "/admin/site-content/instagram", label: "Instagram" },
   { href: "/admin/site-content/newsletter", label: "Newsletter" },
+  { href: "/admin/site-content/new-collection", label: "New Collection" },
   { href: "/admin/site-content/store-locator", label: "Store Locator" },
   { href: "/admin/site-content/testimonials", label: "Testimonials" },
   { href: "/admin/site-content/trust-pages", label: "Trust Pages" },

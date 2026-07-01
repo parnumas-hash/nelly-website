@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import FooterLogoUpload from "@/components/admin/FooterLogoUpload";
+import ProductIdPickerFields from "@/components/admin/site-content/ProductIdPickerFields";
+import CollectionSection from "@/components/home/CollectionSection";
 import { useSiteContentSave } from "@/components/admin/AdminToast";
 import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultHomeCollections } from "@/lib/admin/storage";
 import { getCollectionTab } from "@/lib/admin/site-content-tabs";
+import {
+  HOMEPAGE_PRODUCT_GRID_LIMIT,
+  resolveEcoCollectionProducts,
+  resolveHomeLivingProducts,
+  resolveTravelCollectionProducts,
+} from "@/lib/homepage-product-selection";
 import { shouldUnoptimize } from "@/lib/image-utils";
 import { SITE_IMAGE_SPECS } from "@/lib/site-content-image-specs";
 import type { HomeCollection, HomeCollectionKey, HomeCollections } from "@/types";
@@ -16,6 +24,19 @@ import type { HomeCollection, HomeCollectionKey, HomeCollections } from "@/types
 interface CollectionSectionEditorProps {
   collectionKey: HomeCollectionKey;
 }
+
+const COLLECTION_RESOLVERS = {
+  travel: resolveTravelCollectionProducts,
+  home: resolveHomeLivingProducts,
+  eco: resolveEcoCollectionProducts,
+} as const;
+
+const AUTO_DESCRIPTIONS: Record<HomeCollectionKey, string> = {
+  travel:
+    "Pick up to 4 published products. Leave all empty to auto-show strollers and accessories.",
+  home: "Pick up to 4 published products. Leave all empty to auto-show beds.",
+  eco: "Pick up to 4 published products. Leave all empty to auto-show eco-tagged products.",
+};
 
 function updateCollection(
   form: HomeCollections,
@@ -28,7 +49,8 @@ function updateCollection(
 export default function CollectionSectionEditor({
   collectionKey,
 }: CollectionSectionEditorProps) {
-  const { homeCollections, updateHomeCollections, ready } = useCatalog();
+  const { homeCollections, updateHomeCollections, publishedProducts, ready } =
+    useCatalog();
   const [form, setForm] = useState(homeCollections);
   const tab = getCollectionTab(collectionKey);
 
@@ -38,21 +60,31 @@ export default function CollectionSectionEditor({
     setForm(homeCollections);
   }, [homeCollections]);
 
+  const block = form[collectionKey];
+  const defaults = getDefaultHomeCollections();
+  const previewImage = block.imageUrl || defaults[collectionKey].imageUrl;
+  const usingManualSelection = (block.productIds ?? []).some(Boolean);
+
+  const previewProducts = useMemo(() => {
+    if (!ready) return [];
+    return COLLECTION_RESOLVERS[collectionKey](
+      publishedProducts,
+      block.productIds
+    );
+  }, [ready, publishedProducts, block.productIds, collectionKey]);
+
   if (!ready) {
     return <div className="py-20 text-center text-neutral-400">Loading...</div>;
   }
 
   const save = () => saveWithToast(() => updateHomeCollections(form));
   const applyDefault = () => {
-    const defaults = getDefaultHomeCollections();
+    const nextDefaults = getDefaultHomeCollections();
     setForm((prev) => ({
       ...prev,
-      [collectionKey]: defaults[collectionKey],
+      [collectionKey]: nextDefaults[collectionKey],
     }));
   };
-  const block = form[collectionKey];
-  const defaults = getDefaultHomeCollections();
-  const previewImage = block.imageUrl || defaults[collectionKey].imageUrl;
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -133,6 +165,19 @@ export default function CollectionSectionEditor({
             )
           }
         />
+
+        <ProductIdPickerFields
+          description={AUTO_DESCRIPTIONS[collectionKey]}
+          maxSlots={HOMEPAGE_PRODUCT_GRID_LIMIT}
+          productIds={block.productIds ?? []}
+          onChange={(productIds) =>
+            setForm((prev) =>
+              updateCollection(prev, collectionKey, { productIds })
+            )
+          }
+          publishedProducts={publishedProducts}
+        />
+
         <div className="flex flex-wrap gap-3">
           <Button onClick={save}>Save {tab.label}</Button>
           <Button type="button" variant="outline" onClick={applyDefault}>
@@ -142,28 +187,20 @@ export default function CollectionSectionEditor({
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800">
-        <div className="bg-white p-6 dark:bg-neutral-950">
-          <div className="relative aspect-[5/4] overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-900">
-            <Image
-              src={previewImage}
-              alt={block.imageAlt}
-              fill
-              className="object-cover"
-              unoptimized={shouldUnoptimize(previewImage)}
-            />
-          </div>
-          <h2 className="mt-6 font-display text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
-            {block.title}
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-neutral-500">
-            {block.description}
-          </p>
-          <p className="mt-4 text-xs text-neutral-400">
-            Shop link: {block.href}
-          </p>
-        </div>
+        <CollectionSection
+          id={`${collectionKey}-preview`}
+          title={block.title || defaults[collectionKey].title}
+          description={block.description || defaults[collectionKey].description}
+          image={previewImage}
+          imageAlt={block.imageAlt || defaults[collectionKey].imageAlt}
+          products={previewProducts}
+          href={block.href || defaults[collectionKey].href}
+          background={collectionKey === "home" ? "gray" : "white"}
+          reversed={collectionKey === "home"}
+        />
         <p className="bg-neutral-50 px-4 py-2 text-xs text-neutral-500 dark:bg-neutral-900">
           Live preview — {tab.label}
+          {usingManualSelection ? " (manual products)" : " (automatic products)"}
         </p>
       </div>
     </div>

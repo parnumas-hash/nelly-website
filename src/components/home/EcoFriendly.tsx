@@ -1,23 +1,21 @@
 "use client";
 
+import { useMemo } from "react";
 import CollectionSection from "@/components/home/CollectionSection";
 import { useCatalog } from "@/context/CatalogContext";
 import { getDefaultHomeCollections } from "@/lib/admin/storage";
+import { resolveEcoCollectionProducts } from "@/lib/homepage-product-selection";
 
 export default function EcoFriendly() {
   const { publishedProducts, ready, homeCollections } = useCatalog();
-  const products = ready
-    ? publishedProducts
-        .filter(
-          (p) =>
-            p.category === "eco" ||
-            p.brand === "Earth Rated" ||
-            p.tags.includes("eco")
-        )
-        .slice(0, 4)
-    : [];
   const content = homeCollections ?? getDefaultHomeCollections();
-  const { title, description, imageUrl, href, imageAlt } = content.eco;
+  const { title, description, imageUrl, href, imageAlt, productIds } =
+    content.eco;
+
+  const products = useMemo(() => {
+    if (!ready) return [];
+    return resolveEcoCollectionProducts(publishedProducts, productIds);
+  }, [ready, publishedProducts, productIds]);
 
   return (
     <CollectionSection

@@ -111,7 +111,8 @@ URL: **`/admin`**
 | Footer | Tagline, link columns, social links, copyright, legal links |
 | Trust Pages | Shipping, Returns, FAQ, How to Shop, Privacy, Terms |
 | First Adventure | Section copy + two featured product SKUs |
-| Travel / Home Living / Eco | Section copy, hero image, CTA link (product grids auto-filter) |
+| New Collection / Best Seller | Section headings, links, and up to 4 featured SKUs each |
+| Travel / Home Living / Eco | Section copy, hero image, CTA link, and up to 4 featured SKUs |
 
 ### Product bulk import (Phase 1)
 
@@ -132,7 +133,7 @@ Modes:
 - Brand showcase + featured collections
 - Brand story, benefits, testimonials
 - First Adventure (copy in Site Content; product cards auto from catalog)
-- New arrivals, best sellers, Instagram gallery
+- New arrivals, best sellers (editable in Site Content), Instagram gallery
 - Store locator + newsletter signup
 - Premium footer
 

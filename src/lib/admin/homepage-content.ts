@@ -11,6 +11,7 @@ import { images, unsplash } from "@/lib/images";
 import { formatPrice, FREE_SHIPPING_MIN } from "@/lib/utils";
 import { sanitizeImageUrl } from "@/lib/image-utils";
 import { normalizeFirstAdventureProductIds } from "@/lib/first-adventure-products";
+import { normalizeHomepageProductIds } from "@/lib/homepage-product-selection";
 
 const BENEFIT_ICON_NAMES: BenefitIconName[] = [
   "award",
@@ -214,6 +215,18 @@ export function getDefaultHomepageContent(): HomepageContent {
       footnote: "No spam. Unsubscribe anytime.",
       successMessage: "Thank you for subscribing.",
     },
+    newCollection: {
+      title: "New Collection",
+      href: "/shop?sort=newest",
+      linkLabel: "View All",
+      productIds: [],
+    },
+    bestSeller: {
+      title: "Best Seller",
+      href: "/shop",
+      linkLabel: "View All",
+      productIds: [],
+    },
     firstAdventure: {
       title: "First Adventure",
       description:
@@ -411,6 +424,30 @@ export function normalizeHomepageContent(
         data.newsletter?.successMessage?.trim() ||
         defaults.newsletter.successMessage,
     },
+    newCollection: {
+      ...defaults.newCollection,
+      ...(data.newCollection ?? {}),
+      title:
+        data.newCollection?.title?.trim() || defaults.newCollection.title,
+      href: data.newCollection?.href?.trim() || defaults.newCollection.href,
+      linkLabel:
+        data.newCollection?.linkLabel?.trim() ||
+        defaults.newCollection.linkLabel,
+      productIds: normalizeHomepageProductIds(
+        data.newCollection?.productIds ?? defaults.newCollection.productIds
+      ),
+    },
+    bestSeller: {
+      ...defaults.bestSeller,
+      ...(data.bestSeller ?? {}),
+      title: data.bestSeller?.title?.trim() || defaults.bestSeller.title,
+      href: data.bestSeller?.href?.trim() || defaults.bestSeller.href,
+      linkLabel:
+        data.bestSeller?.linkLabel?.trim() || defaults.bestSeller.linkLabel,
+      productIds: normalizeHomepageProductIds(
+        data.bestSeller?.productIds ?? defaults.bestSeller.productIds
+      ),
+    },
     firstAdventure: {
       ...defaults.firstAdventure,
       ...(data.firstAdventure ?? {}),
@@ -462,6 +499,12 @@ export function mergeHomepageContent(
     newsletter: patch.newsletter
       ? { ...current.newsletter, ...patch.newsletter }
       : current.newsletter,
+    newCollection: patch.newCollection
+      ? { ...current.newCollection, ...patch.newCollection }
+      : current.newCollection,
+    bestSeller: patch.bestSeller
+      ? { ...current.bestSeller, ...patch.bestSeller }
+      : current.bestSeller,
     firstAdventure: patch.firstAdventure
       ? { ...current.firstAdventure, ...patch.firstAdventure }
       : current.firstAdventure,

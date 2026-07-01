@@ -49,6 +49,7 @@ import {
   sanitizeImageList,
   sanitizeImageUrl,
 } from "@/lib/image-utils";
+import { normalizeHomepageProductIds } from "@/lib/homepage-product-selection";
 
 export const STORAGE_KEYS = {
   products: "nelly-admin-products",
@@ -671,6 +672,19 @@ function normalizeHomeCollection(
     imageUrl: sanitizeImageUrl(block.imageUrl, defaults.imageUrl),
     href: block.href?.trim() || defaults.href,
     imageAlt: block.imageAlt?.trim() || defaults.imageAlt,
+    productIds: normalizeHomepageProductIds(block.productIds),
+  };
+}
+
+export function normalizeHomeCollections(
+  stored: Partial<HomeCollections> | null | undefined
+): HomeCollections {
+  const defaults = getDefaultHomeCollections();
+  const data = stored ?? defaults;
+  return {
+    travel: normalizeHomeCollection(data.travel, defaults.travel),
+    home: normalizeHomeCollection(data.home, defaults.home),
+    eco: normalizeHomeCollection(data.eco, defaults.eco),
   };
 }
 
@@ -705,17 +719,11 @@ export function getDefaultHomeCollections(): HomeCollections {
 
 export function loadHomeCollections(): HomeCollections {
   const stored = read<HomeCollections>(STORAGE_KEYS.homeCollections);
-  const defaults = getDefaultHomeCollections();
-  const data = stored ?? defaults;
-  return {
-    travel: normalizeHomeCollection(data.travel, defaults.travel),
-    home: normalizeHomeCollection(data.home, defaults.home),
-    eco: normalizeHomeCollection(data.eco, defaults.eco),
-  };
+  return normalizeHomeCollections(stored);
 }
 
 export function saveHomeCollections(homeCollections: HomeCollections): void {
-  write(STORAGE_KEYS.homeCollections, homeCollections);
+  write(STORAGE_KEYS.homeCollections, normalizeHomeCollections(homeCollections));
 }
 
 export function loadHomepageContent(): HomepageContent {

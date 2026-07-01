@@ -5,17 +5,14 @@ import {
   getDefaultBrands,
   getDefaultFooter,
   getDefaultAbout,
-  getDefaultHomeCollections,
   getDefaultProducts,
+  normalizeHomeCollections,
 } from "@/lib/admin/storage";
 import { normalizeBrandCategories } from "@/lib/brand-categories";
-import { AboutSection, FooterBranding, HeroBanner, HomeCollections, HomepageContent, SitePagesContent } from "@/types";
+import { AboutSection, FooterBranding, HeroBanner } from "@/types";
 import { normalizeFooterBranding } from "@/lib/admin/footer-content";
-import { normalizeHomepageContent, getDefaultHomepageContent } from "@/lib/admin/homepage-content";
-import {
-  getDefaultSitePagesContent,
-  normalizeSitePagesContent,
-} from "@/lib/admin/site-pages-content";
+import { normalizeHomepageContent } from "@/lib/admin/homepage-content";
+import { normalizeSitePagesContent } from "@/lib/admin/site-pages-content";
 
 export function normalizeCatalogSnapshot(
   snapshot: Partial<CatalogSyncSnapshot> | null | undefined
@@ -23,7 +20,6 @@ export function normalizeCatalogSnapshot(
   const fallbackBanner = getDefaultBanner();
   const fallbackFooter = getDefaultFooter();
   const fallbackAbout = getDefaultAbout();
-  const fallbackHomeCollections = getDefaultHomeCollections();
 
   return {
     catalogVersion: snapshot?.catalogVersion ?? CATALOG_VERSION,
@@ -50,20 +46,7 @@ export function normalizeCatalogSnapshot(
       ...fallbackAbout,
       ...(snapshot?.about ?? {}),
     } as AboutSection,
-    homeCollections: {
-      travel: {
-        ...fallbackHomeCollections.travel,
-        ...(snapshot?.homeCollections?.travel ?? {}),
-      },
-      home: {
-        ...fallbackHomeCollections.home,
-        ...(snapshot?.homeCollections?.home ?? {}),
-      },
-      eco: {
-        ...fallbackHomeCollections.eco,
-        ...(snapshot?.homeCollections?.eco ?? {}),
-      },
-    } as HomeCollections,
+    homeCollections: normalizeHomeCollections(snapshot?.homeCollections),
     homepageContent: normalizeHomepageContent(snapshot?.homepageContent),
     sitePages: normalizeSitePagesContent(snapshot?.sitePages),
   };
