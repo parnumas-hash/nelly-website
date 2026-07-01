@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { AlertTriangle, FileSpreadsheet, Upload, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCatalog } from "@/context/CatalogContext";
@@ -27,6 +27,7 @@ export default function ProductImportDialog({
   const { hasPermission } = useAdminSession();
   const canWriteProducts = hasPermission("products:write");
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileBufferRef = useRef<ArrayBuffer | null>(null);
   const [mode, setMode] = useState<ProductImportMode>("upsert");
   const [parsed, setParsed] = useState<ParsedProductImport | null>(null);
   const [fileName, setFileName] = useState("");
@@ -36,6 +37,32 @@ export default function ProductImportDialog({
   );
   const [parseError, setParseError] = useState<string | null>(null);
 
+  const parseBuffer = useCallback(
+    async (buffer: ArrayBuffer, importMode: ProductImportMode) => {
+      setBusy(true);
+      setParseError(null);
+      setResult(null);
+
+      try {
+        const next = parseProductImportWorkbook(buffer, {
+          brands,
+          categories,
+          products: adminProducts,
+          mode: importMode,
+        });
+        setParsed(next);
+      } catch (error) {
+        setParsed(null);
+        setParseError(
+          error instanceof Error ? error.message : "Could not read the Excel file."
+        );
+      } finally {
+        setBusy(false);
+      }
+    },
+    [adminProducts, brands, categories]
+  );
+
   if (!open) return null;
 
   const reset = () => {
@@ -43,6 +70,7 @@ export default function ProductImportDialog({
     setFileName("");
     setResult(null);
     setParseError(null);
+    fileBufferRef.current = null;
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -57,27 +85,17 @@ export default function ProductImportDialog({
 
   const handleFileChange = async (file: File | undefined) => {
     if (!file) return;
-    setBusy(true);
-    setParseError(null);
-    setResult(null);
-    setFileName(file.name);
 
-    try {
-      const buffer = await file.arrayBuffer();
-      const next = parseProductImportWorkbook(buffer, {
-        brands,
-        categories,
-        products: adminProducts,
-        mode,
-      });
-      setParsed(next);
-    } catch (error) {
-      setParsed(null);
-      setParseError(
-        error instanceof Error ? error.message : "Could not read the Excel file."
-      );
-    } finally {
-      setBusy(false);
+    const buffer = await file.arrayBuffer();
+    fileBufferRef.current = buffer;
+    setFileName(file.name);
+    await parseBuffer(buffer, mode);
+  };
+
+  const handleModeChange = (nextMode: ProductImportMode) => {
+    setMode(nextMode);
+    if (fileBufferRef.current) {
+      void parseBuffer(fileBufferRef.current, nextMode);
     }
   };
 
@@ -88,6 +106,7 @@ export default function ProductImportDialog({
       const summary = importProducts(parsed.groups, mode);
       setResult(summary);
       setParsed(null);
+      fileBufferRef.current = null;
     } finally {
       setBusy(false);
     }
@@ -150,9 +169,10 @@ export default function ProductImportDialog({
               <button
                 key={option}
                 type="button"
-                onClick={() => setMode(option)}
+                onClick={() => handleModeChange(option)}
+                disabled={busy}
                 className={cn(
-                  "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                  "rounded-full px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50",
                   mode === option
                     ? "bg-primary text-white"
                     : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-900 dark:text-neutral-300"

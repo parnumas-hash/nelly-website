@@ -4,14 +4,7 @@ import { useMemo } from "react";
 import { useCatalog } from "@/context/CatalogContext";
 import CollectionSection from "@/components/home/CollectionSection";
 import { getDefaultHomepageContent } from "@/lib/admin/homepage-content";
-
-const STARTER_TAGS = new Set([
-  "starter",
-  "first-adventure",
-  "essentials",
-  "new-pawrent",
-  "new",
-]);
+import { resolveFirstAdventureProducts } from "@/lib/first-adventure-products";
 
 export default function FirstAdventure() {
   const { publishedProducts, homepageContent, ready } = useCatalog();
@@ -20,17 +13,11 @@ export default function FirstAdventure() {
 
   const products = useMemo(() => {
     if (!ready) return [];
-
-    const tagged = publishedProducts.filter(
-      (product) =>
-        product.isNew ||
-        product.tags?.some((tag) => STARTER_TAGS.has(tag.toLowerCase()))
+    return resolveFirstAdventureProducts(
+      publishedProducts,
+      content.productIds
     );
-
-    if (tagged.length > 0) return tagged;
-
-    return publishedProducts.filter((product) => product.featured);
-  }, [ready, publishedProducts]);
+  }, [ready, publishedProducts, content.productIds]);
 
   return (
     <CollectionSection

@@ -255,6 +255,8 @@ export interface FirstAdventureSection {
   imageAlt: string;
   href: string;
   ctaLabel: string;
+  /** Up to 2 product IDs; empty = auto from new/starter/featured tags */
+  productIds?: string[];
 }
 
 export interface HomepageContent {

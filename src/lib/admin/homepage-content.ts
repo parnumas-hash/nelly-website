@@ -10,6 +10,7 @@ import {
 import { images, unsplash } from "@/lib/images";
 import { formatPrice, FREE_SHIPPING_MIN } from "@/lib/utils";
 import { sanitizeImageUrl } from "@/lib/image-utils";
+import { normalizeFirstAdventureProductIds } from "@/lib/first-adventure-products";
 
 const BENEFIT_ICON_NAMES: BenefitIconName[] = [
   "award",
@@ -221,6 +222,7 @@ export function getDefaultHomepageContent(): HomepageContent {
       imageAlt: "New pet parent essentials curated by NELLY GROUP",
       href: "/shop?sort=newest",
       ctaLabel: "Shop Collection",
+      productIds: [],
     },
   };
 }
@@ -428,6 +430,9 @@ export function normalizeHomepageContent(
       ctaLabel:
         data.firstAdventure?.ctaLabel?.trim() ||
         defaults.firstAdventure.ctaLabel,
+      productIds: normalizeFirstAdventureProductIds(
+        data.firstAdventure?.productIds ?? defaults.firstAdventure.productIds
+      ),
     },
   };
 }
