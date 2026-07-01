@@ -161,7 +161,15 @@ export function getRequiredPermissionForPath(pathname: string): Permission | nul
   if (pathname.startsWith("/admin/change-password")) return null;
   if (pathname.startsWith("/admin/users")) return "users:manage";
   if (pathname.startsWith("/admin/settings")) return "settings:read";
-  if (pathname.startsWith("/admin/products")) return "products:read";
+  if (pathname.startsWith("/admin/products")) {
+    if (
+      pathname === "/admin/products/new" ||
+      pathname.endsWith("/edit")
+    ) {
+      return "products:write";
+    }
+    return "products:read";
+  }
   if (pathname.startsWith("/admin/brands")) return "brands:read";
   if (pathname.startsWith("/admin/categories")) return "categories:read";
   if (pathname.startsWith("/admin/media")) return "media:read";

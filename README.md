@@ -70,11 +70,13 @@ Run these in **Supabase Dashboard → SQL Editor** (in order for a fresh project
 2. **`supabase/schema-admin-users.sql`** — admin users + roles
 3. **`supabase/migration-footer-branding.sql`** — footer, about, home collections columns (if upgrading an older DB)
 4. **`supabase/migration-homepage-content.sql`** — homepage CMS column
+5. **`supabase/migration-site-pages.sql`** — trust pages CMS column (`site_pages`)
 
-Or run the homepage migration from the CLI (requires `DATABASE_URL` or `SUPABASE_DB_PASSWORD` in `.env.local`):
+Or run migrations from the CLI (requires `DATABASE_URL` or `SUPABASE_DB_PASSWORD` in `.env.local`):
 
 ```bash
 npm run migrate:homepage-content
+npm run migrate:site-pages
 ```
 
 ### Migration checklist
@@ -85,6 +87,7 @@ Use this when deploying or upgrading production:
 - [ ] `schema-admin-users.sql` applied
 - [ ] `migration-footer-branding.sql` applied (legacy DBs only)
 - [ ] `migration-homepage-content.sql` applied (or `npm run migrate:homepage-content`)
+- [ ] `migration-site-pages.sql` applied (or `npm run migrate:site-pages`)
 - [ ] Vercel env vars set (`NEXT_PUBLIC_SUPABASE_*`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_*`)
 - [ ] First login at `/admin/login` with username `admin` and `ADMIN_PASSWORD`
 
@@ -101,7 +104,14 @@ URL: **`/admin`**
 | Media | `/admin/media` | `media:read` / `media:write` |
 | Site Content | `/admin/site-content` | `banners:read` / `banners:write` |
 
-**Site Content** covers hero banner, brand story, benefits, testimonials, Instagram gallery, store locator, First Adventure copy, footer, and about page sections. Images are cropped to recommended aspect ratios and auto-compressed when over ~5 MB.
+**Site Content** covers hero banner, brand story, benefits, testimonials, Instagram gallery, store locator, First Adventure (copy + featured products), collection blocks (Travel / Home Living / Eco), footer, about page, and trust pages. Images are cropped to recommended aspect ratios and auto-compressed when over ~5 MB.
+
+| Site Content tab | What it controls |
+|------------------|------------------|
+| Footer | Tagline, link columns, social links, copyright, legal links |
+| Trust Pages | Shipping, Returns, FAQ, How to Shop, Privacy, Terms |
+| First Adventure | Section copy + two featured product SKUs |
+| Travel / Home Living / Eco | Section copy, hero image, CTA link (product grids auto-filter) |
 
 ### Product bulk import (Phase 1)
 
@@ -126,7 +136,7 @@ Modes:
 - Store locator + newsletter signup
 - Premium footer
 
-Trust pages (shipping, returns, privacy, etc.) are static content in `src/lib/site-pages.ts`.
+Trust pages (shipping, returns, privacy, etc.) are editable in **Site Content → Trust Pages** and stored in Supabase (`site_pages`). Defaults live in `src/lib/admin/site-pages-content.ts`.
 
 ## Scripts
 
@@ -138,6 +148,7 @@ Trust pages (shipping, returns, privacy, etc.) are static content in `src/lib/si
 | `npm run pull:production` | Backup cloud catalog to local file |
 | `npm run restore:local` | Restore backup into localStorage dev flow |
 | `npm run migrate:homepage-content` | Add `homepage_content` column on Supabase |
+| `npm run migrate:site-pages` | Add `site_pages` column on Supabase |
 
 ## Design
 

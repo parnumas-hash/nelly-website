@@ -257,7 +257,9 @@ export default function ProductsAdminPage() {
                   <th className="px-4 py-3">Price</th>
                   <th className="px-4 py-3">Stock</th>
                   <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  {canWriteProducts ? (
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -315,27 +317,29 @@ export default function ProductsAdminPage() {
                           {product.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-                          <Link
-                            href={`/admin/products/${product.id}/edit`}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (confirm(`Delete "${product.name}"?`)) {
-                                deleteProduct(product.id);
-                              }
-                            }}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
+                      {canWriteProducts ? (
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-2">
+                            <Link
+                              href={`/admin/products/${product.id}/edit`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm(`Delete "${product.name}"?`)) {
+                                  deleteProduct(product.id);
+                                }
+                              }}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      ) : null}
                     </tr>
                   );
                 })}

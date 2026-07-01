@@ -56,7 +56,12 @@ export async function middleware(request: NextRequest) {
       session &&
       !hasPermission(session.permissions, required)
     ) {
-      return NextResponse.redirect(new URL("/admin", request.url));
+      const fallback =
+        pathname.startsWith("/admin/products") &&
+        (pathname === "/admin/products/new" || pathname.endsWith("/edit"))
+          ? "/admin/products"
+          : "/admin";
+      return NextResponse.redirect(new URL(fallback, request.url));
     }
   }
 
